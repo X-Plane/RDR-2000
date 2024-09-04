@@ -1,0 +1,26 @@
+/*===--------------------------------------------------------------------------------------------===
+ * xplane.h
+ *
+ * Created by Amy Parent <amy@amyparent.com>
+ * Copyright (c) 2024 Laminar Research. All rights reserved
+ *
+ * Licensed under the MIT License
+ *===--------------------------------------------------------------------------------------------===
+*/
+#ifndef _XPLANE_H_
+#define _XPLANE_H_
+
+#include <XPLMDefs.h>
+#include <XPLMUtilities.h>
+
+PLUGIN_API int XPluginStart(char *name, char *sig, char *desc);
+PLUGIN_API void XPluginStop(void);
+PLUGIN_API int XPluginEnable(void);
+PLUGIN_API void XPluginDisable(void);
+PLUGIN_API void XPluginReceiveMessage(XPLMPluginID from, int msg, void *param);
+
+const char *get_plugin_dir(void);
+const char *get_xplane_dir(void);
+const char *get_plane_dir(void);
+
+#endif /* ifndef _XPLANE_H_ */

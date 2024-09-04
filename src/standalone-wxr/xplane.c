@@ -9,6 +9,7 @@
 */
 #include "xplane.h"
 #include <helpers/helpers.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
@@ -104,4 +105,28 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID from, int msg, void *param) {
         get_paths();
 }
 
+static XPLMDataRef get_dataref_v(const char *fmt, va_list args) {
+    char buf[2048];
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    XPLMDataRef ref = XPLMFindDataRef(buf);
+    if(!ref)
+        log_msg("cannot find dataref `%s'", buf);
+    return ref;
+}
 
+XPLMDataRef get_dataref_safe(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    XPLMDataRef ref = get_dataref_v(fmt, args);
+    va_end(args);
+    ASSERT(ref);
+    return ref;
+}
+
+XPLMDataRef get_dataref(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    XPLMDataRef ref = get_dataref_v(fmt, args);
+    va_end(args);
+    return ref;
+}

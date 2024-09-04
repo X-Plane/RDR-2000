@@ -10,6 +10,7 @@
 #ifndef _XPLANE_H_
 #define _XPLANE_H_
 
+#include <XPLMDataAccess.h>
 #include <XPLMDefs.h>
 #include <XPLMUtilities.h>
 
@@ -22,5 +23,9 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID from, int msg, void *param);
 const char *get_plugin_dir(void);
 const char *get_xplane_dir(void);
 const char *get_plane_dir(void);
+
+XPLMDataRef get_dataref_safe(const char *fmt, ...);
+XPLMDataRef get_dataref(const char *fmt, ...);
+
 
 #endif /* ifndef _XPLANE_H_ */

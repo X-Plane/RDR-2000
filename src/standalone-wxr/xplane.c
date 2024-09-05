@@ -8,6 +8,10 @@
  *===--------------------------------------------------------------------------------------------===
 */
 #include "xplane.h"
+
+#include "rds-81.h"
+
+#include <glutils/gl.h>
 #include <helpers/helpers.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -24,6 +28,8 @@
 static char xplane_dir[512];
 static char plane_dir[512];
 static char plugin_dir[512];
+
+static rds81_t *wxr = NULL;
 
 
 static void get_paths() {
@@ -82,17 +88,24 @@ PLUGIN_API int XPluginStart(char *name, char *sig, char *desc) {
 	strcpy(desc, PLUGIN_DESCRIPTION);
     
     get_paths();
+    glewInit();
+    rds81_declare_cmd_dr();
+    log_msg("%s start done", PLUGIN_SIG);
     return 1;
 }
 
-PLUGIN_API void XPluginStop(void) {
-}
-
 PLUGIN_API int XPluginEnable(void) {
+    wxr = rds81_new(false);
     return 1;
 }
 
 PLUGIN_API void XPluginDisable(void) {
+    if(wxr)
+        rds81_destroy(wxr);
+    wxr = NULL;
+}
+
+PLUGIN_API void XPluginStop(void) {
     
 }
 
@@ -105,7 +118,7 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID from, int msg, void *param) {
         get_paths();
 }
 
-static XPLMDataRef get_dataref_v(const char *fmt, va_list args) {
+static XPLMDataRef find_dr_v(const char *fmt, va_list args) {
     char buf[2048];
     vsnprintf(buf, sizeof(buf), fmt, args);
     XPLMDataRef ref = XPLMFindDataRef(buf);
@@ -114,19 +127,45 @@ static XPLMDataRef get_dataref_v(const char *fmt, va_list args) {
     return ref;
 }
 
-XPLMDataRef get_dataref_safe(const char *fmt, ...) {
+XPLMDataRef find_dr_safe(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    XPLMDataRef ref = get_dataref_v(fmt, args);
+    XPLMDataRef ref = find_dr_v(fmt, args);
     va_end(args);
-    ASSERT(ref);
+    ASSERT(ref != NULL);
     return ref;
 }
 
-XPLMDataRef get_dataref(const char *fmt, ...) {
+XPLMDataRef find_dr(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    XPLMDataRef ref = get_dataref_v(fmt, args);
+    XPLMDataRef ref = find_dr_v(fmt, args);
+    va_end(args);
+    return ref;
+}
+
+static XPLMCommandRef find_cmd_v(const char *fmt, va_list args) {
+    char buf[2048];
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    XPLMCommandRef ref = XPLMFindCommand(buf);
+    if(!ref)
+        log_msg("cannot find command `%s'", buf);
+    return ref;
+}
+
+XPLMCommandRef find_cmd_safe(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    XPLMCommandRef ref = find_cmd_v(fmt, args);
+    va_end(args);
+    ASSERT(ref != NULL);
+    return ref;
+}
+
+XPLMCommandRef find_cmd(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    XPLMCommandRef ref = find_cmd_v(fmt, args);
     va_end(args);
     return ref;
 }

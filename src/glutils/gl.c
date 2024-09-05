@@ -8,13 +8,40 @@
  *===--------------------------------------------------------------------------------------------===
 */
 #include <glutils/gl.h>
-#define STB_IMAGE_IMPLEMENTATION
+// #define STB_IMAGE_IMPLEMENTATION
+// We don't define IMPLEMENTATION because otherwise we get link-time errors, since NanoVG already
+// does that.
 #include <glutils/stb_image.h>
 #include <helpers/helpers.h>
-// #include <acfutils/log.h>
-// #include <acfutils/assert.h>
-// #include <acfutils/helpers.h>
 #include <stdlib.h>
+
+
+GLuint gl_fbo_new(unsigned width, unsigned height, GLuint *out_tex) {
+    ASSERT(width > 0);
+    ASSERT(height > 0);
+    ASSERT(out_tex != NULL);
+    
+    GLuint fbo = 0;
+    GLuint tex = 0;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        log_msg("framebuffer %u incomplete", fbo);
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    *out_tex = tex;
+    return fbo;
+}
 
 static bool check_shader(GLuint sh) {
     GLint is_compiled = 0;
@@ -48,7 +75,7 @@ static bool check_program(GLuint sh) {
     return false;
 }
 
-GLuint gl_create_program(const char *vertex, const char *fragment) {
+GLuint gl_program_new(const char *vertex, const char *fragment) {
     ASSERT(vertex);
     ASSERT(fragment);
 
@@ -89,7 +116,7 @@ GLuint gl_load_shader(const char *source, int type) {
     return sh;
 }
 
-GLuint gl_create_tex(unsigned width, unsigned height) {
+GLuint gl_tex_new(unsigned width, unsigned height) {
     ASSERT(width > 0);
     ASSERT(height > 0);
     
@@ -120,7 +147,7 @@ GLuint gl_load_tex(const char *path, int *w, int *h) {
         return 0;
     }
 
-    GLuint tex = gl_create_tex(*w, *h);
+    GLuint tex = gl_tex_new(*w, *h);
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *w, *h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     free(data);

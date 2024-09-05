@@ -4,4 +4,4 @@ set(ALL_SRC ${SRC} ${HDR})
 
 
 add_xplane_plugin(${CMAKE_PROJECT_NAME} 411 ${ALL_SRC})
-target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC glutils helpers xpwidgets xplm)
+target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC nanovg glutils helpers xpwidgets xplm)

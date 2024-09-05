@@ -7,6 +7,6 @@ set(HDR
     nanovg/src/stb_truetype.h)
 set(SRC nanovg/src/nanovg.c)
 
-add_library(NanoVG STATIC nanovg/src/nanovg.c)
-target_include_directories(NanoVG PUBLIC nanovg/src PRIVATE nanovg/src)
-target_link_libraries(NanoVG PUBLIC glad glfw)
+add_library(nanovg STATIC nanovg/src/nanovg.c)
+target_include_directories(nanovg PUBLIC nanovg/src PRIVATE nanovg/src)
+

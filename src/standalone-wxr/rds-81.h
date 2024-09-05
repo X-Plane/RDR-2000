@@ -10,6 +10,8 @@
 #ifndef _RDS_81_H_
 #define _RDS_81_H_
 
+#include <stdbool.h>
+
 /*
  * Video sources:
  *
@@ -20,18 +22,14 @@
  */
 
 
-#define DEVICE_SIGNATURE    "RDS_81_WXR"
+#define DEVICE_ID       "RDS_81_WXR"
+#define DEVICE_NAME     "RDS-81 Weather Radar Display"
 
+typedef struct rds81_t rds81_t;
 
-void rds81_init();
-void rds81_fini();
+void rds81_declare_cmd_dr();
 
-// Called when the plane has changed, to reset or disable the radar display based on
-// what the plane is.
-void rds81_reset();
-
-
+rds81_t *rds81_new(bool copilot);
+void rds81_destroy(rds81_t *wxr);
 
 #endif /* ifndef _RDS_81_H_ */
-
-

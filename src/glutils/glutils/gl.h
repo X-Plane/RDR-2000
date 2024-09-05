@@ -10,9 +10,14 @@
 #ifndef _GL_H_
 #define _GL_H_
 
-#include "glad.h"
 #include <math.h>
 #include <stdbool.h>
+
+#include <GL/glew.h>
+
+#ifndef NDEBUG
+#define GL_DEBUG
+#endif
 
 #if IBM
 #include <GL/gl.h>
@@ -42,10 +47,12 @@ typedef struct vect2_t {
 #define NULL_VECT2          VECT2(NAN, NAN)
 #define IS_NULL_VECT2(v)    (isnan((v).x) || isnan((v).y))
 
-GLuint gl_create_program(const char *vertex, const char *fragment);
+GLuint gl_fbo_new(unsigned width, unsigned height, GLuint *tex);
+
+GLuint gl_program_new(const char *vertex, const char *fragment);
 GLuint gl_load_shader(const char *source, int type);
 GLuint gl_load_tex(const char *path, int *w, int *h);
-GLuint gl_create_tex(unsigned width, unsigned height);
+GLuint gl_tex_new(unsigned width, unsigned height);
 void gl_ortho(float proj[16], float x, float y, float width, float height);
 
 void check_gl(const char *where, int line);

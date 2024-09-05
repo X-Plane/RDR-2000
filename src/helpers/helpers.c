@@ -37,8 +37,9 @@ void log_msg(const char *fmt, ...)
     
     char *msg = calloc(size, 1);
     size_t offset = snprintf(msg, size, "[%s] ", log_prefix);
-    vsnprintf(msg + offset, size - offset, fmt, args);
+    offset += vsnprintf(msg + offset, size - offset, fmt, args);
     va_end(args);
+    msg[offset] = '\n';
     
     if(!log_fn) {
     	fprintf(stderr, "%s", msg);

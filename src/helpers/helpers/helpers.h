@@ -71,6 +71,8 @@ void log_msg(const char *fmt, ...);
 
 #ifndef NDEBUG
 #define ASSERT(x)   (assert_impl((x), __FILE__, __LINE__, #x))
+#else
+#define ASSERT(x)   UNUSED(x)
 #endif
 
 void assert_impl(bool val, const char *file, unsigned line, const char *expr);

@@ -24,8 +24,9 @@ const char *get_plugin_dir(void);
 const char *get_xplane_dir(void);
 const char *get_plane_dir(void);
 
-XPLMDataRef get_dataref_safe(const char *fmt, ...);
-XPLMDataRef get_dataref(const char *fmt, ...);
-
+XPLMDataRef find_dr_safe(const char *fmt, ...);
+XPLMDataRef find_dr(const char *fmt, ...);
+XPLMCommandRef find_cmd_safe(const char *fmt, ...);
+XPLMCommandRef find_cmd(const char *fmt, ...);
 
 #endif /* ifndef _XPLANE_H_ */

@@ -21,7 +21,6 @@
 #include <helpers/helpers.h>
 
 struct gl_quad_t {
-    GLuint vao;
     GLuint vbo;
     GLuint ibo;
     GLuint shader;

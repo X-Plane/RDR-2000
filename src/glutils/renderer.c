@@ -101,19 +101,19 @@ static void prepare_vertices(gl_quad_t *quad, vect2_t pos, vect2_t size) {
     
     vert[0].pos.x = pos.x;
     vert[0].pos.y = pos.y;
-    vert[0].tex = (vec2f_t){0, 1};
+    vert[0].tex = (vec2f_t){0, 0};
 
     vert[1].pos.x = pos.x + size.x;
     vert[1].pos.y = pos.y;
-    vert[1].tex = (vec2f_t){1, 1};
+    vert[1].tex = (vec2f_t){1, 0};
 
     vert[2].pos.x = pos.x + size.x;
     vert[2].pos.y = pos.y + size.y;
-    vert[2].tex = (vec2f_t){1, 0};
+    vert[2].tex = (vec2f_t){1, 1};
 
     vert[3].pos.x = pos.x;
     vert[3].pos.y = pos.y + size.y;
-    vert[3].tex = (vec2f_t){0, 0};
+    vert[3].tex = (vec2f_t){0, 1};
     
     glBindBuffer(GL_ARRAY_BUFFER, quad->vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vert), vert, GL_STATIC_DRAW);

@@ -175,20 +175,14 @@ static void rds_draw_screen(void *refcon) {
     
     glBindFramebuffer(GL_FRAMEBUFFER, wxr->screen_fbo);
     
-
-    // we do this because to get a y-up ortho matrix, we end up winding
-    // polygons in the wrong order.
-    glCullFace(GL_FRONT);
-    
     mat4 ortho;
-    glm_ortho(0, RDS_SCREEN_W, RDS_SCREEN_H, 0, -1, 1, ortho);
+    glm_ortho(0, RDS_SCREEN_W, 0, RDS_SCREEN_H, -1, 1, ortho);
     glViewport(0, 0, RDS_SCREEN_W/2, RDS_SCREEN_H/2);
     draw_fbo(wxr, wxr->vg, (float *)ortho);
     
     // Revert to how things were before we mucked with OpenGL state
     glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
     glViewport(old_vp[0], old_vp[1], old_vp[2], old_vp[3]);
-    glCullFace(GL_BACK);
     
     mat4 pvm;
     rds_get_xp_pvm(wxr, pvm);

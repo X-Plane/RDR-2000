@@ -12,6 +12,7 @@
 #include "rds-81.h"
 
 #include <glutils/gl.h>
+#include <glutils/stb_image.h>
 #include <helpers/helpers.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -88,6 +89,7 @@ PLUGIN_API int XPluginStart(char *name, char *sig, char *desc) {
 	strcpy(desc, PLUGIN_DESCRIPTION);
     
     get_paths();
+    stbi_set_flip_vertically_on_load(true);
     glewInit();
     rds81_declare_cmd_dr();
     log_msg("%s start done", PLUGIN_SIG);

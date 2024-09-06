@@ -10,6 +10,8 @@
 #include "rds-81_impl.h"
 #include <XPLMGraphics.h>
 #include <cglm/mat4.h>
+#define NANOVG_GL2_IMPLEMENTATION
+#include <nanovg_gl.h>
 
 static const char *vert_shader =
     "#version 120\n"
@@ -98,6 +100,8 @@ static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
 static void rds_draw_screen(void *refcon) {
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
+    
+    rds81_update(wxr);
     
     // Save XP data
     int old_vp[4];
@@ -226,6 +230,8 @@ rds81_t *rds81_new(bool copilot) {
     };
     wxr->device = XPLMCreateAvionicsEx(&desc);
     ASSERT(wxr->device != NULL);
+    
+    rds81_reset_datarefs(wxr);
     return wxr;
 }
 

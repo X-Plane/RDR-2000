@@ -17,8 +17,6 @@
 #include <helpers/helpers.h>
 
 #include <nanovg.h>
-#define NANOVG_GL2_IMPLEMENTATION
-#include <nanovg_gl.h>
 #include <XPLMDisplay.h>
 
 #define RDS_SCALE           1
@@ -89,6 +87,9 @@ typedef struct rds81_t {
     XPLMCommandRef  cmd_popup;
     XPLMCommandRef  cmd_popout;
 } rds81_t;
+
+void rds81_reset_datarefs(rds81_t *wxr);
+void rds81_update(rds81_t *wxr);
 
 #endif /* ifndef _RDS_81_IMPL_H_ */
 

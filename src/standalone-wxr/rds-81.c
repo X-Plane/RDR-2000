@@ -9,67 +9,7 @@
 */
 #include "rds-81_impl.h"
 #include <XPLMGraphics.h>
-
-/*
- * glm_mat4_mul taken from GLM, original header below.
-
- * 
- * Copyright (c), Recep Aslantas.
- *
- * MIT License (MIT), http://opensource.org/licenses/MIT
- * Full license can be found in the LICENSE file
- */
-
-typedef float vec4[4];
-typedef vec4 mat4[4];
-
-static void glm_mat4_mul(mat4 m1, mat4 m2, mat4 dest) {
-  float a00 = m1[0][0], a01 = m1[0][1], a02 = m1[0][2], a03 = m1[0][3],
-        a10 = m1[1][0], a11 = m1[1][1], a12 = m1[1][2], a13 = m1[1][3],
-        a20 = m1[2][0], a21 = m1[2][1], a22 = m1[2][2], a23 = m1[2][3],
-        a30 = m1[3][0], a31 = m1[3][1], a32 = m1[3][2], a33 = m1[3][3],
-
-        b00 = m2[0][0], b01 = m2[0][1], b02 = m2[0][2], b03 = m2[0][3],
-        b10 = m2[1][0], b11 = m2[1][1], b12 = m2[1][2], b13 = m2[1][3],
-        b20 = m2[2][0], b21 = m2[2][1], b22 = m2[2][2], b23 = m2[2][3],
-        b30 = m2[3][0], b31 = m2[3][1], b32 = m2[3][2], b33 = m2[3][3];
-
-  dest[0][0] = a00 * b00 + a10 * b01 + a20 * b02 + a30 * b03;
-  dest[0][1] = a01 * b00 + a11 * b01 + a21 * b02 + a31 * b03;
-  dest[0][2] = a02 * b00 + a12 * b01 + a22 * b02 + a32 * b03;
-  dest[0][3] = a03 * b00 + a13 * b01 + a23 * b02 + a33 * b03;
-  dest[1][0] = a00 * b10 + a10 * b11 + a20 * b12 + a30 * b13;
-  dest[1][1] = a01 * b10 + a11 * b11 + a21 * b12 + a31 * b13;
-  dest[1][2] = a02 * b10 + a12 * b11 + a22 * b12 + a32 * b13;
-  dest[1][3] = a03 * b10 + a13 * b11 + a23 * b12 + a33 * b13;
-  dest[2][0] = a00 * b20 + a10 * b21 + a20 * b22 + a30 * b23;
-  dest[2][1] = a01 * b20 + a11 * b21 + a21 * b22 + a31 * b23;
-  dest[2][2] = a02 * b20 + a12 * b21 + a22 * b22 + a32 * b23;
-  dest[2][3] = a03 * b20 + a13 * b21 + a23 * b22 + a33 * b23;
-  dest[3][0] = a00 * b30 + a10 * b31 + a20 * b32 + a30 * b33;
-  dest[3][1] = a01 * b30 + a11 * b31 + a21 * b32 + a31 * b33;
-  dest[3][2] = a02 * b30 + a12 * b31 + a22 * b32 + a32 * b33;
-  dest[3][3] = a03 * b30 + a13 * b31 + a23 * b32 + a33 * b33;
-}
-
-static void glm_ortho(float left,    float right,
-                float bottom,  float top,
-                float nearZ, float farZ,
-                mat4  dest) {
-    memset(dest, 0, sizeof(mat4));
-    float rl, tb, fn;
-    rl = 1.0f / (right  - left);
-    tb = 1.0f / (top    - bottom);
-    fn =-1.0f / (farZ - nearZ);
-
-    dest[0][0] = 2.0f * rl;
-    dest[1][1] = 2.0f * tb;
-    dest[2][2] = fn;
-    dest[3][0] =-(right  + left)    * rl;
-    dest[3][1] =-(top    + bottom)  * tb;
-    dest[3][2] = nearZ * fn;
-    dest[3][3] = 1.0f;
-}
+#include <cglm/mat4.h>
 
 static const char *vert_shader =
     "#version 120\n"
@@ -134,7 +74,7 @@ static void rds_draw_bezel(float r, float g, float b, void *refcon) {
     mat4 pvm;
     rds_get_xp_pvm(wxr, pvm);
     glCullFace(GL_BACK);
-    quad_render((float *)pvm, wxr->bezel_quad, VECT2(0, 0), VECT2(RDS_BEZEL_W * RDS_SCALE, RDS_BEZEL_H * RDS_SCALE), 1.f);
+    quad_render(pvm, wxr->bezel_quad, VEC2(0, 0), VEC2(RDS_BEZEL_W * RDS_SCALE, RDS_BEZEL_H * RDS_SCALE), 1.f);
 }
 
 #define WXR_CTR_X   (160*2)
@@ -146,13 +86,13 @@ static void rds_draw_bezel(float r, float g, float b, void *refcon) {
 #define WXR_POS_X   (WXR_CTR_X - (WXR_W/2))
 #define WXR_POS_Y   (WXR_CTR_Y)
 
-static void draw_fbo(rds81_t *wxr, NVGcontext *vg, float pvm[16]) {
+static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    quad_render(pvm, wxr->wxr_quad, VECT2(WXR_POS_X, WXR_POS_Y), VECT2(WXR_W, WXR_H), 1.f);
+    quad_render(pvm, wxr->wxr_quad, VEC2(WXR_POS_X, WXR_POS_Y), VEC2(WXR_W, WXR_H), 1.f);
     // quad_render(pvm, wxr->wxr_quad, VECT2(0, 0), VECT2(RDS_SCREEN_W, RDS_SCREEN_H), 1.f);
-    quad_render(pvm, wxr->dots_quad, VECT2(0, 0), VECT2(RDS_SCREEN_W, RDS_SCREEN_H), 1.f);
+    quad_render(pvm, wxr->dots_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W, RDS_SCREEN_H), 1.f);
 }
 
 static void rds_draw_screen(void *refcon) {
@@ -178,7 +118,7 @@ static void rds_draw_screen(void *refcon) {
     mat4 ortho;
     glm_ortho(0, RDS_SCREEN_W, 0, RDS_SCREEN_H, -1, 1, ortho);
     glViewport(0, 0, RDS_SCREEN_W/2, RDS_SCREEN_H/2);
-    draw_fbo(wxr, wxr->vg, (float *)ortho);
+    draw_fbo(wxr, wxr->vg, ortho);
     
     // Revert to how things were before we mucked with OpenGL state
     glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
@@ -190,7 +130,7 @@ static void rds_draw_screen(void *refcon) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, wxr->crt_mask_tex);
     glUniform1i(glGetUniformLocation(wxr->screen_shader, "mask"), 1);
-    quad_render((float *)pvm, wxr->screen_quad, VECT2(0, 0), VECT2(RDS_SCREEN_W * RDS_SCALE, RDS_SCREEN_H * RDS_SCALE), 1.f);
+    quad_render(pvm, wxr->screen_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W * RDS_SCALE, RDS_SCREEN_H * RDS_SCALE), 1.f);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);

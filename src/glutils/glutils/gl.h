@@ -12,7 +12,7 @@
 
 #include <math.h>
 #include <stdbool.h>
-
+#include <cglm/cglm.h>
 #include <GL/glew.h>
 
 #ifndef NDEBUG
@@ -39,13 +39,14 @@
 #endif
 #endif
 
+
 typedef struct vect2_t {
     float x, y;
 } vect2_t;
 
-#define VECT2(xx, yy)       ((vect2_t){.x=(xx), .y=(yy)})
-#define NULL_VECT2          VECT2(NAN, NAN)
-#define IS_NULL_VECT2(v)    (isnan((v).x) || isnan((v).y))
+#define VEC2(xx, yy)        ((vec2){(xx), (yy)})
+#define NULL_VEC2           VEC2(NAN, NAN)
+#define IS_NULL_VEC2(v)     (isnan((v)[0]) || isnan((v)[1]))
 
 GLuint gl_fbo_new(unsigned width, unsigned height, GLuint *tex);
 
@@ -53,7 +54,6 @@ GLuint gl_program_new(const char *vertex, const char *fragment);
 GLuint gl_load_shader(const char *source, int type);
 GLuint gl_load_tex(const char *path, int *w, int *h);
 GLuint gl_tex_new(unsigned width, unsigned height);
-void gl_ortho(float proj[16], float x, float y, float width, float height);
 
 void check_gl(const char *where, int line);
 

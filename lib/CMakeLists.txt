@@ -1,3 +1,10 @@
+option(CGLM_SHARED "Shared build" OFF)
+option(CGLM_STATIC "Static build" ON)
+option(CGLM_USE_C99 "" OFF) # C11 
+option(CGLM_USE_TEST "Enable Tests" OFF) # for make check - make test
+add_subdirectory(cglm)
+
+
 set(HDR
     nanovg/src/fontstash.h
     nanovg/src/nanovg_gl_utils.h

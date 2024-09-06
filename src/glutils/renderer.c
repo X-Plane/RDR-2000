@@ -34,8 +34,8 @@ static const char *frag_shader =
     "}\n";
 
 void quad_init(gl_quad_t *quad, unsigned tex, unsigned shader) {
-    quad->last_pos = NULL_VECT2;
-    quad->last_size = NULL_VECT2;
+    quad->last_pos[0] = NAN;
+    quad->last_size[0] = NAN;
     
     quad->tex = tex;
     if(shader) {
@@ -90,40 +90,43 @@ void quad_destroy(gl_quad_t *quad) {
     free(quad);
 }
 
-static inline bool vec2_eq(vect2_t a, vect2_t b) {
-    return a.x == b.x && a.y == b.y;
+static inline bool vec2_eq(vec2 a, vec2 b) {
+    return a[0] == b[0] && a[1] == b[1];
 }
 
-static void prepare_vertices(gl_quad_t *quad, vect2_t pos, vect2_t size) {
+static void prepare_vertices(gl_quad_t *quad, vec2 pos, vec2 size) {
     if(vec2_eq(quad->last_pos, pos) && vec2_eq(quad->last_size, size))
         return;
     vertex_t vert[4];
     
-    vert[0].pos.x = pos.x;
-    vert[0].pos.y = pos.y;
-    vert[0].tex = (vec2f_t){0, 0};
+    vert[0].pos[0] = pos[0];
+    vert[0].pos[1] = pos[1];
+    vert[0].tex[0] = 0;
+    vert[0].tex[1] = 0;
 
-    vert[1].pos.x = pos.x + size.x;
-    vert[1].pos.y = pos.y;
-    vert[1].tex = (vec2f_t){1, 0};
+    vert[1].pos[0] = pos[0] + size[0];
+    vert[1].pos[1] = pos[1];
+    vert[1].tex[0] = 1;
+    vert[1].tex[1] = 0;
 
-    vert[2].pos.x = pos.x + size.x;
-    vert[2].pos.y = pos.y + size.y;
-    vert[2].tex = (vec2f_t){1, 1};
+    vert[2].pos[0] = pos[0] + size[0];
+    vert[2].pos[1] = pos[1] + size[1];
+    vert[2].tex[0] = 1;
+    vert[2].tex[1] = 1;
 
-    vert[3].pos.x = pos.x;
-    vert[3].pos.y = pos.y + size.y;
-    vert[3].tex = (vec2f_t){0, 1};
+    vert[3].pos[0] = pos[0];
+    vert[3].pos[1] = pos[1] + size[1];
+    vert[3].tex[0] = 0;
+    vert[3].tex[1] = 1;
     
     glBindBuffer(GL_ARRAY_BUFFER, quad->vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vert), vert, GL_STATIC_DRAW);
     CHECK_GL();
     
-    quad->last_pos = pos;
-    quad->last_size = size;
-    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glm_vec2_copy(pos, quad->last_pos);
+    glm_vec2_copy(size, quad->last_size);
 }
-void quad_render(float pvm[16], gl_quad_t *quad, vect2_t pos, vect2_t size, double alpha) {
+void quad_render(mat4 pvm, gl_quad_t *quad, vec2 pos, vec2 size, double alpha) {
     ASSERT(quad);
     ASSERT(pvm);
     
@@ -146,7 +149,7 @@ void quad_render(float pvm[16], gl_quad_t *quad, vect2_t pos, vect2_t size, doub
     glVertexAttribPointer(quad->loc.vtx_pos, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void *)offsetof(vertex_t, pos));
     glVertexAttribPointer(quad->loc.vtx_tex0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void *)offsetof(vertex_t, tex));
     
-    glUniformMatrix4fv(quad->loc.pvm, 1, GL_FALSE, pvm);
+    glUniformMatrix4fv(quad->loc.pvm, 1, GL_FALSE, (float *)pvm);
     glUniform1f(quad->loc.alpha, alpha);
     glUniform1i(quad->loc.tex, 0);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

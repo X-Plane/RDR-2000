@@ -1,3 +1,6 @@
 [submodule "lib/nanovg"]
 	path = lib/nanovg
 	url = git@github.com:memononen/nanovg.git
+[submodule "lib/cglm"]
+	path = lib/cglm
+	url = git@github.com:recp/cglm.git

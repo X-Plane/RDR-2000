@@ -34,24 +34,14 @@ struct gl_quad_t {
         int alpha;
     } loc;
     
-    vect2_t last_pos;
-    vect2_t last_size;
+    vec2    last_pos;
+    vec2    last_size;
 };
 
-struct target_t {
-    vect2_t size;
-    vect2_t offset;
-    float proj[16];
-};
 
 typedef struct {
-    float x;
-    float y;
-} vec2f_t;
-
-typedef struct {
-    vec2f_t pos;
-    vec2f_t tex;
+    vec2    pos;
+    vec2    tex;
 } vertex_t;
 
 #endif /* ifndef _RENDERER_IMPL_H_ */

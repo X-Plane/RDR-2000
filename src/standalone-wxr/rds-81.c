@@ -117,15 +117,65 @@ static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
     quad_render(pvm, wxr->wxr_quad, VEC2(WXR_POS_X, WXR_POS_Y), VEC2(WXR_W, WXR_H), 1.f);
     quad_render(pvm, wxr->dots_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W, RDS_SCREEN_H), 1.f);
     
+    
+
+    nvgFontSize(vg, 30.f);
+    nvgFontFace(vg, "default");
+    nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
+    
+    
+    // Draw Range Info
+    nvgFillColor(vg, nvgRGB(0, 255, 255));
+    
+    static const vec2 rng_pos[4] = {
+        {RDS_SCREEN_W/2 + 40, WXR_H-20},
+        {RDS_SCREEN_W/2 + 130, WXR_H-100},
+        {RDS_SCREEN_W/2 + 180, WXR_H-170},
+        {RDS_SCREEN_W/2 + 170, WXR_H-310},
+    };
+    
+    float full_range = XPLMGetDataf(wxr->dr_range);
+    for(int i = 0; i < 4; ++i) {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%02.0f", full_range * (float)(i+1) / 4.f);
+        nvgText(vg, rng_pos[i][0] + 60, rng_pos[i][1], buf, NULL);
+    }
+    
+    // Draw Tilt info
+    nvgFontSize(vg, 30.f);
+    nvgFillColor(vg, nvgRGB(255, 255, 0));
+    float tilt = XPLMGetDataf(wxr->dr_tilt);
+    char buf[32];
+    if(round(tilt * 10) == 0) {
+        nvgText(vg, RDS_SCREEN_W/2 + 240, WXR_H-350, "0°", NULL);
+    } else {
+        snprintf(buf, sizeof(buf), "%c %4.1f°", tilt > 0 ? 'U' : 'D', fabs(tilt));
+        nvgText(vg, RDS_SCREEN_W/2 + 195, WXR_H-350, buf, NULL);
+    }
+    
+    
+    // Draw Weather Mode
+    int mode = XPLMGetDatai(wxr->dr_mode);
+    const char *mode_str = "STBY";
+    switch(mode) {
+        case 0: mode_str = "STBY";  break;
+        case 1: mode_str = "TEST";  break;
+        case 2:
+        case 3: mode_str = "WX";    break;
+        case 4: mode_str = "MAP";   break;
+        default: break;
+    }
+    nvgFillColor(vg, nvgRGB(0, 255, 255));
+    nvgText(vg, WXR_POS_X+20, WXR_H-40, mode_str, NULL);
+    
+    // Draw Stab Info
+    int stab = XPLMGetDatai(wxr->dr_stab);
+    if(stab != 1) {
+        nvgFillColor(vg, nvgRGB(0, 255, 255));
+        nvgText(vg, WXR_POS_X+20, WXR_H-340, "STAB OFF", NULL);
+    }
     // TODO: draw everything else, eh
-    // nvgBeginPath(vg);
-    // nvgFontSize(vg, 20.f);
-    // nvgFontFace(vg, "default");
-    // nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-    // nvgText(vg, 50, 50, "STAB OFF", NULL);
-    // // nvgFillColor(vg, nvgRGB(0, 255, 255));
-    // // nvgCircle(vg, 50, 50, 30);
-    // nvgFill(vg);
+    
 }
 
 static void rds_draw_screen(void *refcon) {
@@ -216,6 +266,7 @@ rds81_t *rds81_new(rds81_side_t side) {
     rds81_t *wxr = safe_calloc(1, sizeof(*wxr));
     wxr->vg = nvgCreateGL2(NVG_ANTIALIAS);
     
+    // char *font_path = fs_make_path(get_plugin_dir(), "resources", "MonomaniacOne-Regular.ttf", NULL);
     char *font_path = fs_make_path(get_plugin_dir(), "resources", "Roboto-Bold.ttf", NULL);
     int res = nvgCreateFont(wxr->vg, "default", font_path);
     free(font_path);
@@ -231,7 +282,7 @@ rds81_t *rds81_new(rds81_side_t side) {
     wxr->dr_viewport = find_dr_safe("sim/graphics/view/viewport");
     
     wxr->dr_mode = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_mode%s", side_str);
-    wxr->dr_tilt = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_tilt%s", side_str);
+    wxr->dr_tilt = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_tilt", side_str);
     wxr->dr_tilt_antenna = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_tilt_antenna%s", side_str);
     wxr->dr_auto_tilt = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_auto_tilt%s", side_str);
     wxr->dr_gain = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_gain%s", side_str);

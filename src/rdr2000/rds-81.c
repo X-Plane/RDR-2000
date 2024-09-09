@@ -32,7 +32,7 @@ static const char *frag_shader_wxr =
     "void main() {\n"
     "   vec4 col = texture2D(tex, tex_coord);\n"
     "   float brt = (col.r + col.g + col.b) * col.a / 3.f;\n"
-    "   if(brt < 0.1) discard;\n"
+    "   if(brt < 0.05) discard;\n"
     "   gl_FragColor = col;\n"
     "}\n";
 
@@ -223,6 +223,11 @@ static void rds_draw_screen(void *refcon) {
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+static float rds_brightness(float rheo, float ambiant, float bus, void *refcon) {
+    UNUSED(refcon);
+    return rheo * 1.2 * ambiant * (bus > 0.8 ? 1.f : 0.f);
 }
 
 // MARK: - "public" API

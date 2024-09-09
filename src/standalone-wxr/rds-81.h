@@ -26,10 +26,16 @@
 #define DEVICE_NAME     "RDS-81 Weather Radar Display"
 
 typedef struct rds81_t rds81_t;
+typedef enum rds81_side_t {
+    RDS81_SIDE_PILOT,
+    RDS81_SIDE_COPILOT,
+    RDS81_SIDE_NONE,
+} rds81_side_t;
 
 void rds81_declare_cmd_dr();
+rds81_side_t rds81_find_best_side();
 
-rds81_t *rds81_new(bool copilot);
+rds81_t *rds81_new(rds81_side_t side);
 void rds81_destroy(rds81_t *wxr);
 
 #endif /* ifndef _RDS_81_H_ */

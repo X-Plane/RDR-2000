@@ -96,12 +96,27 @@ PLUGIN_API int XPluginStart(char *name, char *sig, char *desc) {
     return 1;
 }
 
+static float first_flight_loop(float elapsed1, float elapsed2, int count, void *refcon) {
+    UNUSED(elapsed1);
+    UNUSED(elapsed2);
+    UNUSED(count);
+    UNUSED(refcon);
+    
+    if(wxr == NULL) {
+        rds81_side_t side = rds81_find_best_side();
+        if(side != RDS81_SIDE_NONE)
+            wxr = rds81_new(side);
+    }
+    return 0;
+}
+
 PLUGIN_API int XPluginEnable(void) {
-    wxr = rds81_new(false);
+    XPLMRegisterFlightLoopCallback(first_flight_loop, -1.f, NULL);
     return 1;
 }
 
 PLUGIN_API void XPluginDisable(void) {
+    XPLMUnregisterFlightLoopCallback(first_flight_loop, NULL);
     if(wxr)
         rds81_destroy(wxr);
     wxr = NULL;

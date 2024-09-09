@@ -13,6 +13,29 @@
 #define NANOVG_GL2_IMPLEMENTATION
 #include <nanovg_gl.h>
 
+static const char *vert_shader_wxr =
+    "#version 120\n"
+    "uniform mat4       pvm;\n"
+    "attribute vec3     vtx_pos;\n"
+    "attribute vec2     vtx_tex0;\n"
+    "varying vec2       tex_coord;\n"
+    "void main() {\n"
+    "   tex_coord = vtx_tex0;\n"
+    "   gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
+    "}\n";
+
+static const char *frag_shader_wxr =
+    "#version 120\n"
+    "uniform sampler2D  tex;\n"
+    "uniform float      alpha;\n"
+    "varying vec2       tex_coord;\n"
+    "void main() {\n"
+    "   vec4 col = texture2D(tex, tex_coord);\n"
+    "   float brt = (col.r + col.g + col.b) * col.a / 3.f;\n"
+    "   if(brt < 0.1) discard;\n"
+    "   gl_FragColor = col;\n"
+    "}\n";
+
 static const char *vert_shader =
     "#version 120\n"
     "uniform mat4       pvm;\n"
@@ -31,9 +54,8 @@ static const char *frag_shader =
     "uniform float      alpha;\n"
     "varying vec2       tex_coord;\n"
     "void main() {\n"
-    "   vec4 glow = vec4(0.1, 0.12, 0.15, 1.0);\n"
+    "   vec4 glow = vec4(0.12, 0.15, 0.2, 1.0);\n"
     "   vec4 col = glow + texture2D(tex, tex_coord);\n"
-    // "   float brt = (col.r + col.g + col.b) / 3.f;\n"
     "   vec4 p = texture2D(mask, tex_coord);\n"
     "   float p_dot = (p.r + p.g + p.b) / 3.f;\n"
     "   gl_FragColor = col;\n"
@@ -90,11 +112,20 @@ static void rds_draw_bezel(float r, float g, float b, void *refcon) {
 
 static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
     glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
     quad_render(pvm, wxr->wxr_quad, VEC2(WXR_POS_X, WXR_POS_Y), VEC2(WXR_W, WXR_H), 1.f);
-    // quad_render(pvm, wxr->wxr_quad, VECT2(0, 0), VECT2(RDS_SCREEN_W, RDS_SCREEN_H), 1.f);
     quad_render(pvm, wxr->dots_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W, RDS_SCREEN_H), 1.f);
+    
+    // TODO: draw everything else, eh
+    // nvgBeginPath(vg);
+    // nvgFontSize(vg, 20.f);
+    // nvgFontFace(vg, "default");
+    // nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+    // nvgText(vg, 50, 50, "STAB OFF", NULL);
+    // // nvgFillColor(vg, nvgRGB(0, 255, 255));
+    // // nvgCircle(vg, 50, 50, 30);
+    // nvgFill(vg);
 }
 
 static void rds_draw_screen(void *refcon) {
@@ -114,7 +145,7 @@ static void rds_draw_screen(void *refcon) {
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    int wxr_img = XPLMGetTexture(xplm_Tex_Radar_Pilot);
+    int wxr_img = XPLMGetTexture(wxr->wxr_tex_id);
     quad_set_tex(wxr->wxr_quad, wxr_img);
     
     glBindFramebuffer(GL_FRAMEBUFFER, wxr->screen_fbo);
@@ -122,7 +153,11 @@ static void rds_draw_screen(void *refcon) {
     mat4 ortho;
     glm_ortho(0, RDS_SCREEN_W, 0, RDS_SCREEN_H, -1, 1, ortho);
     glViewport(0, 0, RDS_SCREEN_W/2, RDS_SCREEN_H/2);
+    
+    
+    nvgBeginFrame(wxr->vg, RDS_SCREEN_W, RDS_SCREEN_H, 2);
     draw_fbo(wxr, wxr->vg, ortho);
+    nvgEndFrame(wxr->vg);
     
     // Revert to how things were before we mucked with OpenGL state
     glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
@@ -154,8 +189,19 @@ static GLuint rds_load_tex(const char *name) {
 
 // This *must* run in XPPluginStart, not enable, so OBJ can bind to our commands and datarefs.
 void rds81_declare_cmd_dr() {
-    XPLMCreateCommand("laminar/standalone_wxr/popup", "Weather Radar popup");
-    XPLMCreateCommand("laminar/standalone_wxr/popout", "Weather Radar pop out window");
+    XPLMCreateCommand("rdr2000/popup", "RDR2000 popup");
+    XPLMCreateCommand("rdr2000/popout", "RDR2000 pop out window");
+    
+    XPLMCreateCommand("rdr2000/mode_up", "RDR2000 Mode Up");
+    XPLMCreateCommand("rdr2000/mode_down", "RDR2000 Mode Down");
+    
+    XPLMCreateCommand("rdr2000/brightness_up", "RDR2000 increase brighness");
+    XPLMCreateCommand("rdr2000/brightness_down", "RDR2000 decrease brighness");
+    
+    XPLMCreateCommand("rdr2000/mode_off", "RDR2000 mode off");
+    XPLMCreateCommand("rdr2000/mode_stby", "RDR2000 mode standby");
+    XPLMCreateCommand("rdr2000/mode_test", "RDR2000 mode test");
+    XPLMCreateCommand("rdr2000/mode_on", "RDR2000 mode on");
 }
 
 static XPLMCommandRef bind_cmd(const char *path, XPLMCommandCallback_f cb, int before, void *refcon) {
@@ -166,12 +212,19 @@ static XPLMCommandRef bind_cmd(const char *path, XPLMCommandCallback_f cb, int b
     return cmd;
 }
 
-rds81_t *rds81_new(bool copilot) {
+rds81_t *rds81_new(rds81_side_t side) {
     rds81_t *wxr = safe_calloc(1, sizeof(*wxr));
     wxr->vg = nvgCreateGL2(NVG_ANTIALIAS);
     
+    char *font_path = fs_make_path(get_plugin_dir(), "resources", "Roboto-Bold.ttf", NULL);
+    int res = nvgCreateFont(wxr->vg, "default", font_path);
+    free(font_path);
+    log_msg("font load: %d", res);
+    
+    wxr->wxr_tex_id = side == RDS81_SIDE_COPILOT ? xplm_Tex_Radar_Copilot : xplm_Tex_Radar_Pilot;
+    
     // Gather all the datarefs we need to make things work
-    const char *side_str = copilot ? "_copilot" : "";
+    const char *side_str = side == RDS81_SIDE_COPILOT ? "_copilot" : "";
     wxr->dr_proj_mat = find_dr_safe("sim/graphics/view/projection_matrix");
     wxr->dr_mv_mat = find_dr_safe("sim/graphics/view/modelview_matrix");
     wxr->dr_fbo = find_dr_safe("sim/graphics/view/current_gl_fbo");
@@ -188,19 +241,20 @@ rds81_t *rds81_new(bool copilot) {
     wxr->dr_pws = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_pws%s", side_str);
     wxr->dr_multiscan = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_multiscan%s", side_str);
     
-    wxr->dr_sector_brg = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_sector_brg%s", side_str);
-    wxr->dr_sector_width = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_sector_width%s", side_str);
-    wxr->dr_antenna_limit = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_antenna_limit%s", side_str);
+    wxr->dr_sector_brg = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_sector_brg");
+    wxr->dr_sector_width = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_sector_width");
+    wxr->dr_antenna_limit = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_antenna_limit");
     
     wxr->dr_range_idx = find_dr_safe("sim/cockpit2/EFIS/map_range%s", side_str);
     wxr->dr_range = find_dr_safe("sim/cockpit2/EFIS/map_range_nm%s", side_str);
     
     // Bind our own commands
-    wxr->cmd_popup = bind_cmd("laminar/standalone_wxr/popup", handle_popup, 0, wxr);
-    wxr->cmd_popout = bind_cmd("laminar/standalone_wxr/popout", handle_popout, 0, wxr);
+    wxr->cmd_popup = bind_cmd("rdr2000/popup", handle_popup, 0, wxr);
+    wxr->cmd_popout = bind_cmd("rdr2000/popout", handle_popout, 0, wxr);
     
     // Allocate the OpenGL resources we need
     wxr->screen_shader = gl_program_new(vert_shader, frag_shader);
+    wxr->wxr_shader = gl_program_new(vert_shader_wxr, frag_shader_wxr);
     
     wxr->screen_fbo = gl_fbo_new(RDS_SCREEN_W/2, RDS_SCREEN_H/2, &wxr->screen_tex);
     wxr->bezel_tex = rds_load_tex("bezel.png");
@@ -210,7 +264,7 @@ rds81_t *rds81_new(bool copilot) {
     wxr->bezel_quad = quad_new(wxr->bezel_tex, 0);
     wxr->screen_quad = quad_new(wxr->screen_tex, wxr->screen_shader);
     wxr->dots_quad = quad_new(wxr->dots_tex, 0);
-    wxr->wxr_quad = quad_new(0, 0);
+    wxr->wxr_quad = quad_new(0, wxr->wxr_shader);
     
     // Create the XP avionics device
     XPLMCreateAvionics_t desc = {
@@ -245,6 +299,9 @@ void rds81_destroy(rds81_t *wxr) {
     quad_destroy(wxr->screen_quad);
     quad_destroy(wxr->dots_quad);
     quad_destroy(wxr->wxr_quad);
+    
+    glDeleteProgram(wxr->screen_shader);
+    glDeleteProgram(wxr->wxr_shader);
     
     glDeleteTextures(1, &wxr->dots_tex);
     glDeleteTextures(1, &wxr->screen_tex);

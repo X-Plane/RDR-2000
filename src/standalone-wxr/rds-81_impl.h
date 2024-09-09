@@ -18,6 +18,7 @@
 
 #include <nanovg.h>
 #include <XPLMDisplay.h>
+#include <XPLMGraphics.h>
 
 #define RDS_SCALE           1
 
@@ -45,10 +46,16 @@ typedef enum {
     KNOB_TILT,
 } knob_id_t;
 
+typedef struct rds81_out_t {
+    int             mode;
+    float           brightness;
+} rds81_out_t;
+
 typedef struct rds81_t {
     GLuint          screen_fbo;
     GLuint          screen_tex;
     GLuint          screen_shader;
+    GLuint          wxr_shader;
     GLuint          bezel_tex;
     GLuint          dots_tex;
     GLuint          crt_mask_tex;
@@ -61,6 +68,8 @@ typedef struct rds81_t {
     XPLMAvionicsID  device;
     
     NVGcontext      *vg;
+    
+    XPLMTextureID   wxr_tex_id;
     
     XPLMDataRef     dr_proj_mat;
     XPLMDataRef     dr_mv_mat;
@@ -87,6 +96,8 @@ typedef struct rds81_t {
     XPLMCommandRef  cmd_popup;
     XPLMCommandRef  cmd_popout;
 } rds81_t;
+
+extern rds81_out_t wxr_out;
 
 void rds81_reset_datarefs(rds81_t *wxr);
 void rds81_update(rds81_t *wxr);

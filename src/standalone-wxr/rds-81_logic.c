@@ -9,6 +9,15 @@
 */
 #include "rds-81_impl.h"
 
+// Picks the best available side for the weather radar to be bound to.
+rds81_side_t rds81_find_best_side() {
+    if(XPLMGetTexture(xplm_Tex_Radar_Copilot))
+        return RDS81_SIDE_COPILOT;
+    if(XPLMGetTexture(xplm_Tex_Radar_Pilot))
+        return RDS81_SIDE_PILOT;
+    return RDS81_SIDE_NONE;
+}
+
 
 void rds81_update(rds81_t *wxr) {
     XPLMSetDataf(wxr->dr_sector_brg, 0);

@@ -95,6 +95,15 @@ static int handle_popout(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refco
 
 // MARK: - Device callbacks
 
+static void rds_draw_knobs(rds81_t *wxr, mat4 pvm) {
+    for(int i = 0; i < KNOB_COUNT; ++i) {
+        knob_t *knob = &wxr->knobs[i];
+        vec2 pos = (vec2){knob->desc->pos[0], knob->desc->pos[1]};
+        vec2 size = (vec2){knob->desc->size[0] * RDS_SCALE, knob->desc->size[1] * RDS_SCALE};
+        quad_render(pvm, knob->quad, pos, size, 0.f, 1.f);
+    }
+}
+
 static void rds_draw_bezel(float r, float g, float b, void *refcon) {
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
@@ -103,6 +112,7 @@ static void rds_draw_bezel(float r, float g, float b, void *refcon) {
     rds_get_xp_pvm(wxr, pvm);
     glCullFace(GL_BACK);
     quad_render(pvm, wxr->bezel_quad, VEC2(0, 0), VEC2(RDS_BEZEL_W * RDS_SCALE, RDS_BEZEL_H * RDS_SCALE), 0.f, 1.f);
+    rds_draw_knobs(wxr, pvm);
 }
 
 #define WXR_CTR_X   (160*2)
@@ -247,7 +257,7 @@ static float rds_brightness(float rheo, float ambiant, float bus, void *refcon) 
 
 // MARK: - "public" API
 
-static GLuint rds_load_tex(const char *name) {
+GLuint rds81_load_tex(const char *name) {
     char *path = fs_make_path(get_plugin_dir(), "resources", name, NULL);
     int w = 0, h = 0;
     GLuint tex = gl_load_tex(path, &w, &h);
@@ -259,34 +269,32 @@ static GLuint rds_load_tex(const char *name) {
 
 // This *must* run in XPPluginStart, not enable, so OBJ can bind to our commands and datarefs.
 void rds81_declare_cmd_dr() {
-    wxr_out.cmd_popup = XPLMCreateCommand("rdr2000/popup", "RDR2000 popup");
-    wxr_out.cmd_popout = XPLMCreateCommand("rdr2000/popout", "RDR2000 pop out window");
+    wxr_out.cmd_popup = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/popup", "RDR2000 popup");
+    wxr_out.cmd_popout = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/popout", "RDR2000 pop out window");
     
-    wxr_out.cmd_mode_up = XPLMCreateCommand("rdr2000/mode_up", "RDR2000 Mode Up");
-    wxr_out.cmd_mode_dn = XPLMCreateCommand("rdr2000/mode_down", "RDR2000 Mode Down");
+    wxr_out.cmd_mode_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_up", "RDR2000 Mode Up");
+    wxr_out.cmd_mode_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_down", "RDR2000 Mode Down");
     
-    wxr_out.cmd_brt_up = XPLMCreateCommand("rdr2000/brightness_up", "RDR2000 increase brighness");
-    wxr_out.cmd_brt_dn = XPLMCreateCommand("rdr2000/brightness_down", "RDR2000 decrease brighness");
+    wxr_out.cmd_brt_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/brightness_up", "RDR2000 increase brightness");
+    wxr_out.cmd_brt_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/brightness_down", "RDR2000 decrease brightness");
     
-    wxr_out.cmd_off = XPLMCreateCommand("rdr2000/mode_off", "RDR2000 mode off");
-    wxr_out.cmd_stby = XPLMCreateCommand("rdr2000/mode_stby", "RDR2000 mode standby");
-    wxr_out.cmd_test = XPLMCreateCommand("rdr2000/mode_test", "RDR2000 mode test");
-    wxr_out.cmd_on = XPLMCreateCommand("rdr2000/mode_on", "RDR2000 mode on");
+    wxr_out.cmd_tilt_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/tilt_up", "RDR2000 increase tilt");
+    wxr_out.cmd_tilt_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/tilt_down", "RDR2000 decrease tilt");
     
-    wxr_out.cmd_wx = XPLMCreateCommand("rdr2000/mode_wx", "RDR2000 mode Wx");
-    wxr_out.cmd_wxa = XPLMCreateCommand("rdr2000/mode_wxa", "RDR2000 mode WxA");
-    wxr_out.cmd_map = XPLMCreateCommand("rdr2000/mode_map", "RDR2000 mode Map");
-    wxr_out.cmd_rng_up = XPLMCreateCommand("rdr2000/range_up", "RDR2000 range up");
-    wxr_out.cmd_rng_dn = XPLMCreateCommand("rdr2000/range_down", "RDR2000 range down");
-    wxr_out.cmd_stab = XPLMCreateCommand("rdr2000/stab", "RDR2000 stab");
-}
-
-static XPLMCommandRef bind_cmd(const char *path, XPLMCommandCallback_f cb, int before, void *refcon) {
-    XPLMCommandRef cmd = XPLMFindCommand(path);
-    if(cmd == NULL)
-        return NULL;
-    XPLMRegisterCommandHandler(cmd, cb, before, refcon);
-    return cmd;
+    wxr_out.cmd_gain_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/gain_up", "RDR2000 increase gain");
+    wxr_out.cmd_gain_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/gain_down", "RDR2000 decrease gain");
+    
+    wxr_out.cmd_off = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_off", "RDR2000 mode off");
+    wxr_out.cmd_stby = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_stby", "RDR2000 mode standby");
+    wxr_out.cmd_test = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_test", "RDR2000 mode test");
+    wxr_out.cmd_on = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_on", "RDR2000 mode on");
+    
+    wxr_out.cmd_wx = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_wx", "RDR2000 mode Wx");
+    wxr_out.cmd_wxa = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_wxa", "RDR2000 mode WxA");
+    wxr_out.cmd_map = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_map", "RDR2000 mode Map");
+    wxr_out.cmd_rng_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/range_up", "RDR2000 range up");
+    wxr_out.cmd_rng_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/range_down", "RDR2000 range down");
+    wxr_out.cmd_stab = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/stab", "RDR2000 stab");
 }
 
 rds81_t *rds81_new(rds81_side_t side) {
@@ -337,9 +345,9 @@ rds81_t *rds81_new(rds81_side_t side) {
     wxr->wxr_shader = gl_program_new(vert_shader_wxr, frag_shader_wxr);
     
     wxr->screen_fbo = gl_fbo_new(RDS_SCREEN_W/2, RDS_SCREEN_H/2, &wxr->screen_tex);
-    wxr->bezel_tex = rds_load_tex("bezel.png");
-    wxr->dots_tex = rds_load_tex("dots.png");
-    wxr->crt_mask_tex = rds_load_tex("crt_mask.png");
+    wxr->bezel_tex = rds81_load_tex("bezel.png");
+    wxr->dots_tex = rds81_load_tex("dots.png");
+    wxr->crt_mask_tex = rds81_load_tex("crt_mask.png");
     
     wxr->bezel_quad = quad_new(wxr->bezel_tex, 0);
     wxr->screen_quad = quad_new(wxr->screen_tex, wxr->screen_shader);
@@ -365,6 +373,8 @@ rds81_t *rds81_new(rds81_side_t side) {
     wxr->device = XPLMCreateAvionicsEx(&desc);
     ASSERT(wxr->device != NULL);
     
+    rds81_init_kn_butt(wxr);
+    
     wxr->mode = RDS81_MODE_OFF;
     wxr->submode = RDS81_SUBMODE_WX;
     wxr->stab = true;
@@ -376,6 +386,7 @@ rds81_t *rds81_new(rds81_side_t side) {
 void rds81_destroy(rds81_t *wxr) {
     ASSERT(wxr != NULL);
     
+    rds81_fini_kn_butt(wxr);
     rds81_unbind_commands(wxr);
     XPLMUnregisterCommandHandler(wxr_out.cmd_popup, handle_popup, 0, wxr);
     XPLMUnregisterCommandHandler(wxr_out.cmd_popout, handle_popout, 0, wxr);

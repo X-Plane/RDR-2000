@@ -20,6 +20,8 @@
 #include <XPLMDisplay.h>
 #include <XPLMGraphics.h>
 
+#define DR_CMD_PREFIX ""
+
 #define RDS_SCALE           1
 
 #define RDS_SCREEN_W        640
@@ -32,22 +34,6 @@
 
 #define BUTTON_COUNT    (6)
 #define KNOB_COUNT      (4)
-
-// typedef enum {
-//     BUTTON_WX,
-//     BUTTON_WXA,
-//     BUTTON_MAP,
-//     BUTTON_RNG_UP,
-//     BUTTON_RNG_DN,
-//     BUTTON_STAB
-// } button_id_t;
-//
-// typedef enum {
-//     KNOB_BRT,
-//     KNOB_GAIN,
-//     KNOB_MODE,
-//     KNOB_TILT,
-// } knob_id_t;
 
 typedef enum {
     RDS81_MODE_OFF,
@@ -77,6 +63,7 @@ typedef struct {
     const char  *cmd_up;
     const char  *cmd_dn;
     const char  *dref;
+    const char  *tex;
     vec2        pos;
     vec2        size;
     
@@ -104,9 +91,12 @@ typedef struct {
 
 typedef struct {
     const knob_desc_t   *desc;
-    XPLMCommandRef  cmd_up;
-    XPLMCommandRef  cmd_dn;
-    XPLMDataRef     val;
+    XPLMCommandRef      cmd_up;
+    XPLMCommandRef      cmd_dn;
+    XPLMDataRef         val;
+    
+    GLuint              tex;
+    gl_quad_t           *quad;
 } knob_t;
 
 typedef struct rds81_out_t {
@@ -118,6 +108,13 @@ typedef struct rds81_out_t {
     
     XPLMCommandRef  cmd_brt_up;
     XPLMCommandRef  cmd_brt_dn;
+    
+    XPLMCommandRef  cmd_tilt_up;
+    XPLMCommandRef  cmd_tilt_dn;
+    
+    XPLMCommandRef  cmd_gain_up;
+    XPLMCommandRef  cmd_gain_dn;
+    
     XPLMCommandRef  cmd_wx;
     XPLMCommandRef  cmd_wxa;
     XPLMCommandRef  cmd_map;
@@ -147,6 +144,7 @@ typedef struct rds81_t {
     gl_quad_t       *dots_quad;
     gl_quad_t       *wxr_quad;
     
+    
     XPLMAvionicsID  device;
     
     NVGcontext      *vg;
@@ -174,6 +172,12 @@ typedef struct rds81_t {
     
     XPLMDataRef     dr_range_idx;
     XPLMDataRef     dr_range;
+        
+    // UI elements
+    knob_t          knobs[KNOB_COUNT];
+    button_t        buttons[BUTTON_COUNT];
+    knob_t          *act_knob;
+    button_t        *act_button;
     
     // Logic data
     rds81_mode_t    mode;
@@ -183,8 +187,14 @@ typedef struct rds81_t {
 
 extern rds81_out_t wxr_out;
 
+GLuint rds81_load_tex(const char *name);
+
+void rds81_init_kn_butt(rds81_t *wxr);
+void rds81_fini_kn_butt(rds81_t *wxr);
+
 void rds81_bind_commands(rds81_t *wxr);
 void rds81_unbind_commands(rds81_t *wxr);
+
 void rds81_reset_datarefs(rds81_t *wxr);
 void rds81_update(rds81_t *wxr);
 

@@ -53,6 +53,7 @@ void assert_impl(bool val, const char *file, unsigned line, const char *expr) {
     if(val)
         return;
     log_msg("%s:%u: assertion `%s' failed\n", file, line, expr);
+    abort();
 }
 
 char *fs_make_path(const char *root, ...) {

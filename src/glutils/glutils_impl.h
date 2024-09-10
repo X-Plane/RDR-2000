@@ -21,10 +21,11 @@
 #include <helpers/helpers.h>
 
 struct gl_quad_t {
-    GLuint vbo;
-    GLuint ibo;
-    GLuint shader;
-    GLuint tex;
+    GLuint  vbo;
+    GLuint  ibo;
+    GLuint  shader;
+    GLuint  tex;
+    bool    own_shader;
     
     struct {
         int vtx_pos;

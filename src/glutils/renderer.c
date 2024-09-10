@@ -40,8 +40,10 @@ void quad_init(gl_quad_t *quad, unsigned tex, unsigned shader) {
     quad->tex = tex;
     if(shader) {
         quad->shader = shader;
+        quad->own_shader = false;
     } else {
         quad->shader = gl_program_new(vert_shader, frag_shader);
+        quad->own_shader = true;
     }
     
     // glGenVertexArrays(1, &quad->vao);
@@ -76,6 +78,8 @@ void quad_set_tex(gl_quad_t *quad, unsigned tex) {
 }
 
 void quad_fini(gl_quad_t *quad) {
+    if(quad->own_shader)
+        glDeleteProgram(quad->shader);
     glDeleteBuffers(1, &quad->vbo);
     glDeleteBuffers(1, &quad->ibo);
 }

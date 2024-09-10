@@ -29,12 +29,12 @@ struct gl_quad_t {
     struct {
         int vtx_pos;
         int vtx_tex0;
-        int pvm;
+        int pv;
+        int model;
         int tex;
         int alpha;
     } loc;
     
-    vec2    last_pos;
     vec2    last_size;
 };
 

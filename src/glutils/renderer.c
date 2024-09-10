@@ -14,13 +14,14 @@
 
 static const char *vert_shader =
     "#version 120\n"
-    "uniform mat4       pvm;\n"
+    "uniform mat4       pv;\n"
+    "uniform mat4       model;\n"
     "attribute vec3     vtx_pos;\n"
     "attribute vec2     vtx_tex0;\n"
     "varying vec2       tex_coord;\n"
     "void main() {\n"
     "   tex_coord = vtx_tex0;\n"
-    "   gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
+    "   gl_Position = pv * model * vec4(vtx_pos, 1.0);\n"
     "}\n";
 
 static const char *frag_shader =
@@ -34,7 +35,6 @@ static const char *frag_shader =
     "}\n";
 
 void quad_init(gl_quad_t *quad, unsigned tex, unsigned shader) {
-    quad->last_pos[0] = NAN;
     quad->last_size[0] = NAN;
     
     quad->tex = tex;
@@ -55,7 +55,8 @@ void quad_init(gl_quad_t *quad, unsigned tex, unsigned shader) {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     
     glUseProgram(quad->shader);
-    quad->loc.pvm = glGetUniformLocation(quad->shader, "pvm");
+    quad->loc.pv = glGetUniformLocation(quad->shader, "pv");
+    quad->loc.model = glGetUniformLocation(quad->shader, "model");
     quad->loc.tex = glGetUniformLocation(quad->shader, "tex");
     quad->loc.alpha = glGetUniformLocation(quad->shader, "alpha");
     
@@ -94,28 +95,28 @@ static inline bool vec2_eq(vec2 a, vec2 b) {
     return a[0] == b[0] && a[1] == b[1];
 }
 
-static void prepare_vertices(gl_quad_t *quad, vec2 pos, vec2 size) {
-    if(vec2_eq(quad->last_pos, pos) && vec2_eq(quad->last_size, size))
+static void prepare_vertices(gl_quad_t *quad, vec2 size) {
+    if(vec2_eq(quad->last_size, size))
         return;
     vertex_t vert[4];
     
-    vert[0].pos[0] = pos[0];
-    vert[0].pos[1] = pos[1];
+    vert[0].pos[0] = 0;
+    vert[0].pos[1] = 0;
     vert[0].tex[0] = 0;
     vert[0].tex[1] = 0;
 
-    vert[1].pos[0] = pos[0] + size[0];
-    vert[1].pos[1] = pos[1];
+    vert[1].pos[0] = size[0];
+    vert[1].pos[1] = 0;
     vert[1].tex[0] = 1;
     vert[1].tex[1] = 0;
 
-    vert[2].pos[0] = pos[0] + size[0];
-    vert[2].pos[1] = pos[1] + size[1];
+    vert[2].pos[0] = size[0];
+    vert[2].pos[1] = size[1];
     vert[2].tex[0] = 1;
     vert[2].tex[1] = 1;
 
-    vert[3].pos[0] = pos[0];
-    vert[3].pos[1] = pos[1] + size[1];
+    vert[3].pos[0] = 0;
+    vert[3].pos[1] = size[1];
     vert[3].tex[0] = 0;
     vert[3].tex[1] = 1;
     
@@ -123,10 +124,9 @@ static void prepare_vertices(gl_quad_t *quad, vec2 pos, vec2 size) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(vert), vert, GL_STATIC_DRAW);
     CHECK_GL();
     
-    glm_vec2_copy(pos, quad->last_pos);
     glm_vec2_copy(size, quad->last_size);
 }
-void quad_render(mat4 pvm, gl_quad_t *quad, vec2 pos, vec2 size, double alpha) {
+void quad_render(mat4 pvm, gl_quad_t *quad, vec2 pos, vec2 size, float rot, float alpha) {
     ASSERT(quad);
     ASSERT(pvm);
     
@@ -137,7 +137,7 @@ void quad_render(mat4 pvm, gl_quad_t *quad, vec2 pos, vec2 size, double alpha) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, quad->tex);
     
-    prepare_vertices(quad, pos, size);
+    prepare_vertices(quad, size);
     
     glUseProgram(quad->shader);
     glBindBuffer(GL_ARRAY_BUFFER, quad->vbo);
@@ -149,7 +149,13 @@ void quad_render(mat4 pvm, gl_quad_t *quad, vec2 pos, vec2 size, double alpha) {
     glVertexAttribPointer(quad->loc.vtx_pos, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void *)offsetof(vertex_t, pos));
     glVertexAttribPointer(quad->loc.vtx_tex0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void *)offsetof(vertex_t, tex));
     
-    glUniformMatrix4fv(quad->loc.pvm, 1, GL_FALSE, (float *)pvm);
+    mat4 model;
+	glm_mat4_identity(model);
+    glm_rotate_at(model, (vec3){size[0]/2.f, size[1]/2.f, 0}, glm_rad(rot), (vec3){0, 0, 1});
+    glm_translate(model, (vec3){pos[0], pos[1], 0});
+    
+    glUniformMatrix4fv(quad->loc.pv, 1, GL_FALSE, (float *)pvm);
+    glUniformMatrix4fv(quad->loc.model, 1, GL_FALSE, (float *)model);
     glUniform1f(quad->loc.alpha, alpha);
     glUniform1i(quad->loc.tex, 0);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

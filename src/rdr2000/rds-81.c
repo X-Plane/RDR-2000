@@ -15,13 +15,14 @@
 
 static const char *vert_shader_wxr =
     "#version 120\n"
-    "uniform mat4       pvm;\n"
+    "uniform mat4       pv;\n"
+    "uniform mat4       model;\n"
     "attribute vec3     vtx_pos;\n"
     "attribute vec2     vtx_tex0;\n"
     "varying vec2       tex_coord;\n"
     "void main() {\n"
     "   tex_coord = vtx_tex0;\n"
-    "   gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
+    "   gl_Position = pv * model * vec4(vtx_pos, 1.0);\n"
     "}\n";
 
 static const char *frag_shader_wxr =
@@ -38,13 +39,14 @@ static const char *frag_shader_wxr =
 
 static const char *vert_shader =
     "#version 120\n"
-    "uniform mat4       pvm;\n"
+    "uniform mat4       pv;\n"
+    "uniform mat4       model;\n"
     "attribute vec3     vtx_pos;\n"
     "attribute vec2     vtx_tex0;\n"
     "varying vec2       tex_coord;\n"
     "void main() {\n"
     "   tex_coord = vtx_tex0;\n"
-    "   gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
+    "   gl_Position = pv * model * vec4(vtx_pos, 1.0);\n"
     "}\n";
 
 static const char *frag_shader =
@@ -52,10 +54,12 @@ static const char *frag_shader =
     "uniform sampler2D  tex;\n"
     "uniform sampler2D  mask;\n"
     "uniform float      alpha;\n"
+    "uniform float      scale;\n"
     "varying vec2       tex_coord;\n"
     "void main() {\n"
     "   vec4 glow = vec4(0.12, 0.15, 0.2, 1.0);\n"
-    "   vec4 col = glow + texture2D(tex, tex_coord);\n"
+    "   vec2 uv = vec2(-(1.f - scale)) + (tex_coord / scale);"
+    "   vec4 col = glow + texture2D(tex, uv);\n"
     "   vec4 p = texture2D(mask, tex_coord);\n"
     "   float p_dot = (p.r + p.g + p.b) / 3.f;\n"
     "   gl_FragColor = col;\n"
@@ -98,7 +102,7 @@ static void rds_draw_bezel(float r, float g, float b, void *refcon) {
     mat4 pvm;
     rds_get_xp_pvm(wxr, pvm);
     glCullFace(GL_BACK);
-    quad_render(pvm, wxr->bezel_quad, VEC2(0, 0), VEC2(RDS_BEZEL_W * RDS_SCALE, RDS_BEZEL_H * RDS_SCALE), 1.f);
+    quad_render(pvm, wxr->bezel_quad, VEC2(0, 0), VEC2(RDS_BEZEL_W * RDS_SCALE, RDS_BEZEL_H * RDS_SCALE), 0.f, 1.f);
 }
 
 #define WXR_CTR_X   (160*2)
@@ -111,71 +115,79 @@ static void rds_draw_bezel(float r, float g, float b, void *refcon) {
 #define WXR_POS_Y   (WXR_CTR_Y)
 
 static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
+    float full_range = XPLMGetDataf(wxr->dr_range);
+    int stab = XPLMGetDatai(wxr->dr_stab);
+    
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
-    quad_render(pvm, wxr->wxr_quad, VEC2(WXR_POS_X, WXR_POS_Y), VEC2(WXR_W, WXR_H), 1.f);
-    quad_render(pvm, wxr->dots_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W, RDS_SCREEN_H), 1.f);
+    if(wxr->mode > RDS81_MODE_STBY) {
+        quad_render(pvm, wxr->wxr_quad, VEC2(WXR_POS_X, WXR_POS_Y), VEC2(WXR_W, WXR_H), 0.f, 1.f);
+        quad_render(pvm, wxr->dots_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W, RDS_SCREEN_H), 0.f, 1.f);
+    }
     
-    
-
     nvgFontSize(vg, 30.f);
     nvgFontFace(vg, "default");
     nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
     
     
     // Draw Range Info
-    nvgFillColor(vg, nvgRGB(0, 255, 255));
+    if(wxr->mode > RDS81_MODE_STBY) {
+        nvgFillColor(vg, nvgRGB(0, 255, 255));
     
-    static const vec2 rng_pos[4] = {
-        {RDS_SCREEN_W/2 + 40, WXR_H-20},
-        {RDS_SCREEN_W/2 + 130, WXR_H-100},
-        {RDS_SCREEN_W/2 + 180, WXR_H-170},
-        {RDS_SCREEN_W/2 + 170, WXR_H-310},
-    };
+        static const vec2 rng_pos[4] = {
+            {RDS_SCREEN_W/2 + 40, WXR_H-20},
+            {RDS_SCREEN_W/2 + 130, WXR_H-100},
+            {RDS_SCREEN_W/2 + 180, WXR_H-170},
+            {RDS_SCREEN_W/2 + 170, WXR_H-310},
+        };
     
-    float full_range = XPLMGetDataf(wxr->dr_range);
-    for(int i = 0; i < 4; ++i) {
+        for(int i = 0; i < 4; ++i) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%02.0f", full_range * (float)(i+1) / 4.f);
+            nvgText(vg, rng_pos[i][0] + 60, rng_pos[i][1], buf, NULL);
+        }
+    
+        // Draw Tilt info
+        nvgFontSize(vg, 30.f);
+        nvgFillColor(vg, nvgRGB(255, 255, 0));
+        float tilt = XPLMGetDataf(wxr->dr_tilt);
         char buf[32];
-        snprintf(buf, sizeof(buf), "%02.0f", full_range * (float)(i+1) / 4.f);
-        nvgText(vg, rng_pos[i][0] + 60, rng_pos[i][1], buf, NULL);
-    }
-    
-    // Draw Tilt info
-    nvgFontSize(vg, 30.f);
-    nvgFillColor(vg, nvgRGB(255, 255, 0));
-    float tilt = XPLMGetDataf(wxr->dr_tilt);
-    char buf[32];
-    if(round(tilt * 10) == 0) {
-        nvgText(vg, RDS_SCREEN_W/2 + 240, WXR_H-350, "0°", NULL);
-    } else {
-        snprintf(buf, sizeof(buf), "%c %4.1f°", tilt > 0 ? 'U' : 'D', fabs(tilt));
-        nvgText(vg, RDS_SCREEN_W/2 + 195, WXR_H-350, buf, NULL);
+        if(round(tilt * 10) == 0) {
+            nvgText(vg, RDS_SCREEN_W/2 + 240, WXR_H-350, "0°", NULL);
+        } else {
+            snprintf(buf, sizeof(buf), "%c %4.1f°", tilt > 0 ? 'U' : 'D', fabs(tilt));
+            nvgText(vg, RDS_SCREEN_W/2 + 195, WXR_H-350, buf, NULL);
+        }
     }
     
     
     // Draw Weather Mode
-    int mode = XPLMGetDatai(wxr->dr_mode);
-    const char *mode_str = "STBY";
-    switch(mode) {
-        case 0: mode_str = "STBY";  break;
-        case 1: mode_str = "TEST";  break;
-        case 2:
-        case 3: mode_str = "WX";    break;
-        case 4: mode_str = "MAP";   break;
-        default: break;
+    
+    if(wxr->mode != RDS81_MODE_OFF) {
+        const char *mode_str = "STBY";
+        switch(wxr->mode) {
+        case RDS81_MODE_OFF:
+        case RDS81_MODE_STBY: mode_str = "STBY"; break;
+        case RDS81_MODE_TEST: mode_str = "TEST"; break;
+        case RDS81_MODE_ON:
+            if(wxr->submode == RDS81_SUBMODE_WX)
+                mode_str = "WX";
+            else if(wxr->submode == RDS81_SUBMODE_WXA)
+                mode_str = "WXA";
+            else if(wxr->submode == RDS81_SUBMODE_MAP)
+                mode_str = "MAP";
+            break;
+        }
+        nvgFillColor(vg, nvgRGB(0, 255, 255));
+        nvgText(vg, WXR_POS_X+20, WXR_H-40, mode_str, NULL);
     }
-    nvgFillColor(vg, nvgRGB(0, 255, 255));
-    nvgText(vg, WXR_POS_X+20, WXR_H-40, mode_str, NULL);
     
     // Draw Stab Info
-    int stab = XPLMGetDatai(wxr->dr_stab);
-    if(stab != 1) {
+    if(wxr->mode > RDS81_MODE_STBY && stab != 1) {
         nvgFillColor(vg, nvgRGB(0, 255, 255));
         nvgText(vg, WXR_POS_X+20, WXR_H-340, "STAB OFF", NULL);
     }
-    // TODO: draw everything else, eh
-    
 }
 
 static void rds_draw_screen(void *refcon) {
@@ -219,7 +231,8 @@ static void rds_draw_screen(void *refcon) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, wxr->crt_mask_tex);
     glUniform1i(glGetUniformLocation(wxr->screen_shader, "mask"), 1);
-    quad_render(pvm, wxr->screen_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W * RDS_SCALE, RDS_SCREEN_H * RDS_SCALE), 1.f);
+    glUniform1f(glGetUniformLocation(wxr->screen_shader, "scale"), 1.f);
+    quad_render(pvm, wxr->screen_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W * RDS_SCALE, RDS_SCREEN_H * RDS_SCALE), 0.f, 1.f);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -244,19 +257,26 @@ static GLuint rds_load_tex(const char *name) {
 
 // This *must* run in XPPluginStart, not enable, so OBJ can bind to our commands and datarefs.
 void rds81_declare_cmd_dr() {
-    XPLMCreateCommand("rdr2000/popup", "RDR2000 popup");
-    XPLMCreateCommand("rdr2000/popout", "RDR2000 pop out window");
+    wxr_out.cmd_popup = XPLMCreateCommand("rdr2000/popup", "RDR2000 popup");
+    wxr_out.cmd_popout = XPLMCreateCommand("rdr2000/popout", "RDR2000 pop out window");
     
-    XPLMCreateCommand("rdr2000/mode_up", "RDR2000 Mode Up");
-    XPLMCreateCommand("rdr2000/mode_down", "RDR2000 Mode Down");
+    wxr_out.cmd_mode_up = XPLMCreateCommand("rdr2000/mode_up", "RDR2000 Mode Up");
+    wxr_out.cmd_mode_dn = XPLMCreateCommand("rdr2000/mode_down", "RDR2000 Mode Down");
     
-    XPLMCreateCommand("rdr2000/brightness_up", "RDR2000 increase brighness");
-    XPLMCreateCommand("rdr2000/brightness_down", "RDR2000 decrease brighness");
+    wxr_out.cmd_brt_up = XPLMCreateCommand("rdr2000/brightness_up", "RDR2000 increase brighness");
+    wxr_out.cmd_brt_dn = XPLMCreateCommand("rdr2000/brightness_down", "RDR2000 decrease brighness");
     
-    XPLMCreateCommand("rdr2000/mode_off", "RDR2000 mode off");
-    XPLMCreateCommand("rdr2000/mode_stby", "RDR2000 mode standby");
-    XPLMCreateCommand("rdr2000/mode_test", "RDR2000 mode test");
-    XPLMCreateCommand("rdr2000/mode_on", "RDR2000 mode on");
+    wxr_out.cmd_off = XPLMCreateCommand("rdr2000/mode_off", "RDR2000 mode off");
+    wxr_out.cmd_stby = XPLMCreateCommand("rdr2000/mode_stby", "RDR2000 mode standby");
+    wxr_out.cmd_test = XPLMCreateCommand("rdr2000/mode_test", "RDR2000 mode test");
+    wxr_out.cmd_on = XPLMCreateCommand("rdr2000/mode_on", "RDR2000 mode on");
+    
+    wxr_out.cmd_wx = XPLMCreateCommand("rdr2000/mode_wx", "RDR2000 mode Wx");
+    wxr_out.cmd_wxa = XPLMCreateCommand("rdr2000/mode_wxa", "RDR2000 mode WxA");
+    wxr_out.cmd_map = XPLMCreateCommand("rdr2000/mode_map", "RDR2000 mode Map");
+    wxr_out.cmd_rng_up = XPLMCreateCommand("rdr2000/range_up", "RDR2000 range up");
+    wxr_out.cmd_rng_dn = XPLMCreateCommand("rdr2000/range_down", "RDR2000 range down");
+    wxr_out.cmd_stab = XPLMCreateCommand("rdr2000/stab", "RDR2000 stab");
 }
 
 static XPLMCommandRef bind_cmd(const char *path, XPLMCommandCallback_f cb, int before, void *refcon) {
@@ -305,8 +325,10 @@ rds81_t *rds81_new(rds81_side_t side) {
     wxr->dr_range = find_dr_safe("sim/cockpit2/EFIS/map_range_nm%s", side_str);
     
     // Bind our own commands
-    wxr->cmd_popup = bind_cmd("rdr2000/popup", handle_popup, 0, wxr);
-    wxr->cmd_popout = bind_cmd("rdr2000/popout", handle_popout, 0, wxr);
+    XPLMRegisterCommandHandler(wxr_out.cmd_popup, handle_popup, 0, wxr);
+    XPLMRegisterCommandHandler(wxr_out.cmd_popout, handle_popout, 0, wxr);
+    
+    rds81_bind_commands(wxr);
     
     // Allocate the OpenGL resources we need
     wxr->screen_shader = gl_program_new(vert_shader, frag_shader);
@@ -341,6 +363,10 @@ rds81_t *rds81_new(rds81_side_t side) {
     wxr->device = XPLMCreateAvionicsEx(&desc);
     ASSERT(wxr->device != NULL);
     
+    wxr->mode = RDS81_MODE_OFF;
+    wxr->submode = RDS81_SUBMODE_WX;
+    wxr->stab = true;
+    
     rds81_reset_datarefs(wxr);
     return wxr;
 }
@@ -348,8 +374,9 @@ rds81_t *rds81_new(rds81_side_t side) {
 void rds81_destroy(rds81_t *wxr) {
     ASSERT(wxr != NULL);
     
-    XPLMUnregisterCommandHandler(wxr->cmd_popup, handle_popup, 0, wxr);
-    XPLMUnregisterCommandHandler(wxr->cmd_popout, handle_popout, 0, wxr);
+    rds81_unbind_commands(wxr);
+    XPLMUnregisterCommandHandler(wxr_out.cmd_popup, handle_popup, 0, wxr);
+    XPLMUnregisterCommandHandler(wxr_out.cmd_popout, handle_popout, 0, wxr);
     
     quad_destroy(wxr->bezel_quad);
     quad_destroy(wxr->screen_quad);

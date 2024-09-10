@@ -30,25 +30,104 @@
 #define RDS_SCREEN_OFF_X    192
 #define RDS_SCREEN_OFF_Y    100
 
-typedef enum {
-    BUTTON_WX,
-    BUTTON_WXA,
-    BUTTON_MAP,
-    BUTTON_RNG_UP,
-    BUTTON_RNG_DN,
-    BUTTON_STAB
-} button_id_t;
+// typedef enum {
+//     BUTTON_WX,
+//     BUTTON_WXA,
+//     BUTTON_MAP,
+//     BUTTON_RNG_UP,
+//     BUTTON_RNG_DN,
+//     BUTTON_STAB
+// } button_id_t;
+//
+// typedef enum {
+//     KNOB_BRT,
+//     KNOB_GAIN,
+//     KNOB_MODE,
+//     KNOB_TILT,
+// } knob_id_t;
 
 typedef enum {
-    KNOB_BRT,
-    KNOB_GAIN,
-    KNOB_MODE,
-    KNOB_TILT,
-} knob_id_t;
+    RDS81_MODE_OFF,
+    RDS81_MODE_STBY,
+    RDS81_MODE_TEST,
+    RDS81_MODE_ON,
+} rds81_mode_t;
+
+typedef enum {
+    RDS81_SUBMODE_WX,
+    RDS81_SUBMODE_WXA,
+    RDS81_SUBMODE_MAP
+} rds81_submode_t;
+
+typedef struct {
+    const char  *cmd;
+    vec2        pos;
+    vec2        size;
+} button_desc_t;
+
+typedef struct {
+    const button_desc_t *desc;
+    XPLMCommandRef      cmd;
+} button_t;
+
+typedef struct {
+    const char  *cmd_up;
+    const char  *cmd_dn;
+    const char  *dref;
+    vec2        pos;
+    vec2        size;
+    
+    enum {
+        KBOB_INT,
+        KNOB_FLOAT,
+    }           type;
+    
+    union {
+        struct {
+            float   min;
+            float   max;
+            float   min_angle;
+            float   max_angle;
+        } f32;
+        
+        struct {
+            int     min;
+            int     max;
+            int     min_angle;
+            int     max_angle;
+        } i32;
+    };
+} knob_desc_t;
+
+typedef struct {
+    const knob_desc_t   *desc;
+    XPLMCommandRef  cmd_up;
+    XPLMCommandRef  cmd_dn;
+    XPLMDataRef     val;
+} knob_t;
 
 typedef struct rds81_out_t {
     int             mode;
     float           brightness;
+    
+    XPLMCommandRef  cmd_popup;
+    XPLMCommandRef  cmd_popout;
+    
+    XPLMCommandRef  cmd_brt_up;
+    XPLMCommandRef  cmd_brt_dn;
+    XPLMCommandRef  cmd_wx;
+    XPLMCommandRef  cmd_wxa;
+    XPLMCommandRef  cmd_map;
+    XPLMCommandRef  cmd_rng_up;
+    XPLMCommandRef  cmd_rng_dn;
+    XPLMCommandRef  cmd_stab;
+    
+    XPLMCommandRef  cmd_mode_up;
+    XPLMCommandRef  cmd_mode_dn;
+    XPLMCommandRef  cmd_off;
+    XPLMCommandRef  cmd_stby;
+    XPLMCommandRef  cmd_test;
+    XPLMCommandRef  cmd_on;
 } rds81_out_t;
 
 typedef struct rds81_t {
@@ -93,12 +172,16 @@ typedef struct rds81_t {
     XPLMDataRef     dr_range_idx;
     XPLMDataRef     dr_range;
     
-    XPLMCommandRef  cmd_popup;
-    XPLMCommandRef  cmd_popout;
+    // Logic data
+    rds81_mode_t    mode;
+    rds81_submode_t submode;
+    bool            stab;
 } rds81_t;
 
 extern rds81_out_t wxr_out;
 
+void rds81_bind_commands(rds81_t *wxr);
+void rds81_unbind_commands(rds81_t *wxr);
 void rds81_reset_datarefs(rds81_t *wxr);
 void rds81_update(rds81_t *wxr);
 

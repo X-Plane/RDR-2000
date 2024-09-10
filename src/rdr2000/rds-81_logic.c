@@ -11,115 +11,70 @@
 
 rds81_out_t wxr_out;
 
-// Command handlers
+#define BUTT(str, x, y, w, h)   (button_desc_t){.cmd=str, .pos={x, y}, .size={w, h}}
 
-static int handle_submode_wx(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr->submode = RDS81_SUBMODE_WX;
-    }
-    return 1;
-}
+static const button_desc_t button_desc[BUTTON_COUNT] = {
+    BUTT("rdr2000/mode_wx", 45, 433, 76, 55),
+    BUTT("rdr2000/mode_wxa", 45, 348, 76, 55),
+    BUTT("rdr2000/mode_map", 45, 265, 76, 55),
+    
 
-static int handle_submode_wxa(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr->submode = RDS81_SUBMODE_WXA;
-    }
-    return 1;
-}
+    BUTT("rdr2000/range_up", 904, 433, 76, 55),
+    BUTT("rdr2000/range_down", 904, 348, 76, 55),
+    BUTT("rdr2000/stab", 904, 265, 76, 55),
+};
 
-static int handle_submode_map(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr->submode = RDS81_SUBMODE_MAP;
-    }
-    return 1;
-}
-
-static int handle_stab(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        int stab = !XPLMGetDatai(wxr->dr_stab);
-        XPLMSetDatai(wxr->dr_stab, stab);
-    }
-    return 1;
-}
-
-static int handle_range_buttons(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        int range = XPLMGetDatai(wxr->dr_range_idx);
-        if(cmd == wxr_out.cmd_rng_up)
-            range += 1;
-        else if(cmd == wxr_out.cmd_rng_dn)
-            range -= 1;
-        range = CLAMP(range, 0, 6);
-        XPLMSetDatai(wxr->dr_range_idx, range);
-    }
-    return 1;
-}
-
-static int handle_mode_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        int mode = wxr->mode + 1;
-        wxr->mode = CLAMP(mode, 0, 3);
-    }
-    return 1;
-}
-
-static int handle_mode_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        int mode = wxr->mode - 1;
-        wxr->mode = CLAMP(mode, 0, 3);
-    }
-    return 1;
-}
-
-static int handle_off(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr->mode = RDS81_MODE_OFF;
-    }
-    return 1;
-}
-
-static int handle_stby(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr->mode = RDS81_MODE_STBY;
-    }
-    return 1;
-}
-
-static int handle_test(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr->mode = RDS81_MODE_TEST;
-    }
-    return 1;
-}
-
-static int handle_on(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
-    rds81_t *wxr = refcon;
-    ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr->mode = RDS81_MODE_ON;
-    }
-    return 1;
-}
+static const knob_desc_t knob_desc[KNOB_COUNT] = {
+    (knob_desc_t){
+        .cmd_up="rdr2000/brightness_up", .cmd_dn="rdr2000/brightness_dn",
+        .dref="rdr2000/brightness",
+        .pos={47, 554}, .size={69, 69},
+        .type=KNOB_FLOAT,
+        .f32={
+            .min=0.f,
+            .max=1.f,
+            .min_angle=0,
+            .max_angle=315,
+        }
+    },
+    (knob_desc_t){
+        .cmd_up="rdr2000/gain_up", .cmd_dn="rdr2000/gain_dn",
+        .dref="rdr2000/gain",
+        .pos={47, 83}, .size={69, 69},
+        .type=KNOB_FLOAT,
+        .f32={
+            .min=0.f,
+            .max=2.f,
+            .min_angle=0,
+            .max_angle=315,
+        }
+    },
+    (knob_desc_t){
+        .cmd_up="rdr2000/tilt_up", .cmd_dn="rdr2000/tilt_dn",
+        .dref="rdr2000/tilt",
+        .pos={904, 58}, .size={95, 95},
+        .type=KNOB_FLOAT,
+        .f32={
+            .min=-15.f,
+            .max=15.f,
+            .min_angle=-135,
+            .max_angle=135,
+        }
+    },
+    (knob_desc_t){
+        .cmd_up="rdr2000/mode_up", .cmd_dn="rdr2000/mode_dn",
+        .dref="rdr2000/mode",
+        .pos={904, 526}, .size={95, 95},
+        .type=KNOB_INT,
+        .i32={
+            .min=0,
+            .max=3,
+            .min_angle=-52,
+            .max_angle=26,
+        }
+    },
+    
+};
 
 // Picks the best available side for the weather radar to be bound to.
 rds81_side_t rds81_find_best_side() {
@@ -153,35 +108,6 @@ void rds81_update(rds81_t *wxr) {
         XPLMSetDatai(wxr->dr_mode, wxr->submode == RDS81_SUBMODE_MAP ? 4 : 2);
         break;
     }
-}
-
-void rds81_bind_commands(rds81_t *wxr) {
-    XPLMRegisterCommandHandler(wxr_out.cmd_wx, handle_submode_wx, 1, wxr);
-    // XPLMRegisterCommandHandler(wxr_out.cmd_def_wx, handle_submode_map, 1, wxr);
-    XPLMRegisterCommandHandler(wxr_out.cmd_wxa, handle_submode_wxa, 1, wxr);
-    XPLMRegisterCommandHandler(wxr_out.cmd_map, handle_submode_map, 1, wxr);
-    // XPLMRegisterCommandHandler(wxr_out.cmd_def_map, handle_submode_map, 1, wxr);
-    
-    XPLMRegisterCommandHandler(wxr_out.cmd_stab, handle_stab, 1, wxr);
-    XPLMRegisterCommandHandler(wxr_out.cmd_rng_up, handle_range_buttons, 1, wxr);
-    XPLMRegisterCommandHandler(wxr_out.cmd_rng_dn, handle_range_buttons, 1, wxr);
-    
-    XPLMRegisterCommandHandler(wxr_out.cmd_off, handle_off, 1, wxr);
-    XPLMRegisterCommandHandler(wxr_out.cmd_stby, handle_stby, 1, wxr);
-    XPLMRegisterCommandHandler(wxr_out.cmd_test, handle_test, 1, wxr);
-    XPLMRegisterCommandHandler(wxr_out.cmd_on, handle_on, 1, wxr);
-}
-
-void rds81_unbind_commands(rds81_t *wxr) {
-    XPLMUnregisterCommandHandler(wxr_out.cmd_wx, handle_submode_wx, 1, wxr);
-    // XPLMUnregisterCommandHandler(wxr_out.cmd_def_wx, handle_submode_map, 1, wxr);
-    XPLMUnregisterCommandHandler(wxr_out.cmd_wxa, handle_submode_wxa, 1, wxr);
-    XPLMUnregisterCommandHandler(wxr_out.cmd_map, handle_submode_map, 1, wxr);
-    // XPLMUnregisterCommandHandler(wxr_out.cmd_def_map, handle_submode_map, 1, wxr);
-    
-    XPLMUnregisterCommandHandler(wxr_out.cmd_stab, handle_stab, 1, wxr);
-    XPLMUnregisterCommandHandler(wxr_out.cmd_rng_up, handle_range_buttons, 1, wxr);
-    XPLMUnregisterCommandHandler(wxr_out.cmd_rng_dn, handle_range_buttons, 1, wxr);
 }
 
 void rds81_reset_datarefs(rds81_t *wxr) {

@@ -30,6 +30,9 @@
 #define RDS_SCREEN_OFF_X    192
 #define RDS_SCREEN_OFF_Y    100
 
+#define BUTTON_COUNT    (6)
+#define KNOB_COUNT      (4)
+
 // typedef enum {
 //     BUTTON_WX,
 //     BUTTON_WXA,
@@ -78,7 +81,7 @@ typedef struct {
     vec2        size;
     
     enum {
-        KBOB_INT,
+        KNOB_INT,
         KNOB_FLOAT,
     }           type;
     

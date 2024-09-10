@@ -25,12 +25,16 @@
 #define PLUGIN_NAME         "Standalone Weather Radar"
 #define PLUGIN_SIG          "com.laminar.standalone-wxr"
 #define PLUGIN_DESCRIPTION  "RDS-81 standalone weather radar unit for GA"
+#define MSG_ADD_DATAREF     0x01000000
+
 
 static char xplane_dir[512];
 static char plane_dir[512];
 static char plugin_dir[512];
 
 static rds81_t *wxr = NULL;
+
+static XPLMPluginID dataref_editor = XPLM_NO_PLUGIN_ID;
 
 
 static void get_paths() {
@@ -112,10 +116,12 @@ static float first_flight_loop(float elapsed1, float elapsed2, int count, void *
 
 PLUGIN_API int XPluginEnable(void) {
     XPLMRegisterFlightLoopCallback(first_flight_loop, -1.f, NULL);
+    dataref_editor = XPLMFindPluginBySignature("xplanesdk.examples.DataRefEditor");
     return 1;
 }
 
 PLUGIN_API void XPluginDisable(void) {
+    dataref_editor = XPLM_NO_PLUGIN_ID;
     XPLMUnregisterFlightLoopCallback(first_flight_loop, NULL);
     if(wxr)
         rds81_destroy(wxr);
@@ -185,4 +191,68 @@ XPLMCommandRef find_cmd(const char *fmt, ...) {
     XPLMCommandRef ref = find_cmd_v(fmt, args);
     va_end(args);
     return ref;
+}
+
+static void set_data_f(void *refcon, float val) {
+    *(float *)refcon = val;
+}
+
+static void set_data_d(void *refcon, double val) {
+    *(double *)refcon = val;
+}
+
+static void set_data_i(void *refcon, int val) {
+    *(int *)refcon = val;
+}
+
+static float get_data_f(void *refcon) {
+    return *(const float *)refcon;
+}
+
+static double get_data_d(void *refcon) {
+    return *(const double *)refcon;
+}
+
+static int get_data_i(void *refcon) {
+    return *(const int *)refcon;
+}
+
+static void register_dre(const char *path) {
+    if(dataref_editor == XPLM_NO_PLUGIN_ID)
+        return;
+    XPLMSendMessageToPlugin(dataref_editor, MSG_ADD_DATAREF, (void *)path);
+}
+
+XPLMDataRef create_dr_i(int *val, bool writeable, const char *fmt, ...) {
+    char buf[1024];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+    
+    return XPLMRegisterDataAccessor(buf, xplmType_Int, writeable,
+        get_data_i, writeable ? set_data_i : NULL,
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL,
+        val, writeable ? val : NULL);
+}
+
+XPLMDataRef create_dr_f(float *val, bool writeable, const char *fmt, ...) {
+    char buf[1024];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+    
+    return XPLMRegisterDataAccessor(buf, xplmType_Int, writeable,
+        NULL, NULL,
+        get_data_f, writeable ? set_data_f : NULL,
+        get_data_d, writeable ? set_data_d : NULL,
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL,
+        val, writeable ? val : NULL);
 }

@@ -95,12 +95,24 @@ static int handle_popout(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refco
 
 // MARK: - Device callbacks
 
+static float remap(float x, float a1, float b1, float a2, float b2) {
+    return a2 + (x - a1) * (b2 - a2) / (b1 - a1);
+}
+
 static void rds_draw_knobs(rds81_t *wxr, mat4 pvm) {
     for(int i = 0; i < KNOB_COUNT; ++i) {
         knob_t *knob = &wxr->knobs[i];
+
+        float val = knob->desc->type == KNOB_INT ?
+            XPLMGetDatai(knob->val) : XPLMGetDataf(knob->val);
+        float angle = remap(val,
+            knob->desc->min, knob->desc->max,
+            knob->desc->min_angle, knob->desc->max_angle);
+        
+        
         vec2 pos = (vec2){knob->desc->pos[0], knob->desc->pos[1]};
         vec2 size = (vec2){knob->desc->size[0] * RDS_SCALE, knob->desc->size[1] * RDS_SCALE};
-        quad_render(pvm, knob->quad, pos, size, 0.f, 1.f);
+        quad_render(pvm, knob->quad, pos, size, -angle, 1.f);
     }
 }
 
@@ -250,6 +262,19 @@ static void rds_draw_screen(void *refcon) {
     }
 }
 
+static int rds_click_bezel(int x, int y, XPLMMouseStatus mouse, void *refcon) {
+    rds81_t *wxr = refcon;
+    ASSERT(wxr != NULL);
+    
+    switch(mouse) {
+    case xplm_MouseDown:
+        rds81_click_down(wxr, (vec2){x, y});
+    case xplm_MouseUp:
+        rds81_click_release(wxr);
+    }
+    return wxr->act_cmd != NULL;
+}
+
 static float rds_brightness(float rheo, float ambiant, float bus, void *refcon) {
     UNUSED(refcon);
     return rheo * 1.2 * ambiant * (bus > 0.8 ? 1.f : 0.f);
@@ -295,6 +320,11 @@ void rds81_declare_cmd_dr() {
     wxr_out.cmd_rng_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/range_up", "RDR2000 range up");
     wxr_out.cmd_rng_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/range_down", "RDR2000 range down");
     wxr_out.cmd_stab = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/stab", "RDR2000 stab");
+    
+    wxr_out.dr_mode = create_dr_i(&wxr_out.mode, true, DR_CMD_PREFIX "rdr2000/mode");
+    wxr_out.dr_brt = create_dr_f(&wxr_out.brt, true, DR_CMD_PREFIX "rdr2000/brightness");
+    wxr_out.dr_tilt = create_dr_f(&wxr_out.tilt, true, DR_CMD_PREFIX "rdr2000/tilt");
+    wxr_out.dr_gain = create_dr_f(&wxr_out.gain, true, DR_CMD_PREFIX "rdr2000/gain");
 }
 
 rds81_t *rds81_new(rds81_side_t side) {
@@ -366,6 +396,9 @@ rds81_t *rds81_new(rds81_side_t side) {
         
         .bezelDrawCallback = rds_draw_bezel,
         .drawCallback = rds_draw_screen,
+        
+        .bezelClickCallback = rds_click_bezel,
+        
         .deviceID = DEVICE_ID,
         .deviceName = DEVICE_NAME,
         .refcon = wxr,
@@ -385,6 +418,11 @@ rds81_t *rds81_new(rds81_side_t side) {
 
 void rds81_destroy(rds81_t *wxr) {
     ASSERT(wxr != NULL);
+    
+    XPLMUnregisterDataAccessor(wxr_out.dr_mode);
+    XPLMUnregisterDataAccessor(wxr_out.dr_gain);
+    XPLMUnregisterDataAccessor(wxr_out.dr_tilt);
+    XPLMUnregisterDataAccessor(wxr_out.dr_brt);
     
     rds81_fini_kn_butt(wxr);
     rds81_unbind_commands(wxr);

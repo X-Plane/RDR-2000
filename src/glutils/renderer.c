@@ -155,8 +155,8 @@ void quad_render(mat4 pvm, gl_quad_t *quad, vec2 pos, vec2 size, float rot, floa
     
     mat4 model;
 	glm_mat4_identity(model);
-    glm_rotate_at(model, (vec3){size[0]/2.f, size[1]/2.f, 0}, glm_rad(rot), (vec3){0, 0, 1});
     glm_translate(model, (vec3){pos[0], pos[1], 0});
+    glm_rotate_at(model, (vec3){size[0]/2.f, size[1]/2.f, 0}, glm_rad(rot), (vec3){0, 0, 1});
     
     glUniformMatrix4fv(quad->loc.pv, 1, GL_FALSE, (float *)pvm);
     glUniformMatrix4fv(quad->loc.model, 1, GL_FALSE, (float *)model);

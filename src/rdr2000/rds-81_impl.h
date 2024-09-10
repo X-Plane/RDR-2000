@@ -70,23 +70,12 @@ typedef struct {
     enum {
         KNOB_INT,
         KNOB_FLOAT,
-    }           type;
-    
-    union {
-        struct {
-            float   min;
-            float   max;
-            float   min_angle;
-            float   max_angle;
-        } f32;
-        
-        struct {
-            int     min;
-            int     max;
-            int     min_angle;
-            int     max_angle;
-        } i32;
-    };
+    }       type;
+
+    float   min;
+    float   max;
+    float   min_angle;
+    float   max_angle;
 } knob_desc_t;
 
 typedef struct {
@@ -101,7 +90,9 @@ typedef struct {
 
 typedef struct rds81_out_t {
     int             mode;
-    float           brightness;
+    float           brt;
+    float           tilt;
+    float           gain;
     
     XPLMCommandRef  cmd_popup;
     XPLMCommandRef  cmd_popout;
@@ -128,6 +119,11 @@ typedef struct rds81_out_t {
     XPLMCommandRef  cmd_stby;
     XPLMCommandRef  cmd_test;
     XPLMCommandRef  cmd_on;
+    
+    XPLMDataRef     dr_mode;
+    XPLMDataRef     dr_gain;
+    XPLMDataRef     dr_tilt;
+    XPLMDataRef     dr_brt;
 } rds81_out_t;
 
 typedef struct rds81_t {
@@ -176,8 +172,7 @@ typedef struct rds81_t {
     // UI elements
     knob_t          knobs[KNOB_COUNT];
     button_t        buttons[BUTTON_COUNT];
-    knob_t          *act_knob;
-    button_t        *act_button;
+    XPLMCommandRef  act_cmd;
     
     // Logic data
     rds81_mode_t    mode;
@@ -194,6 +189,8 @@ void rds81_fini_kn_butt(rds81_t *wxr);
 
 void rds81_bind_commands(rds81_t *wxr);
 void rds81_unbind_commands(rds81_t *wxr);
+bool rds81_click_down(rds81_t *wxr, vec2 pos);
+bool rds81_click_release(rds81_t *wxr);
 
 void rds81_reset_datarefs(rds81_t *wxr);
 void rds81_update(rds81_t *wxr);

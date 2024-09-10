@@ -31,6 +31,10 @@ void rds81_update(rds81_t *wxr) {
     XPLMSetDatai(wxr->dr_pws, 0);
     XPLMSetDatai(wxr->dr_multiscan, 0);
     
+    wxr->mode = CLAMP(wxr_out.mode, 0, 3);
+    wxr_out.gain = XPLMGetDataf(wxr->dr_gain);
+    wxr_out.tilt = XPLMGetDataf(wxr->dr_tilt);
+    wxr_out.mode = wxr->mode;
     
     switch(wxr->mode) {
     case RDS81_MODE_OFF:

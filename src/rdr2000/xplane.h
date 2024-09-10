@@ -13,6 +13,7 @@
 #include <XPLMDataAccess.h>
 #include <XPLMDefs.h>
 #include <XPLMUtilities.h>
+#include <stdbool.h>
 
 PLUGIN_API int XPluginStart(char *name, char *sig, char *desc);
 PLUGIN_API void XPluginStop(void);
@@ -28,5 +29,8 @@ XPLMDataRef find_dr_safe(const char *fmt, ...);
 XPLMDataRef find_dr(const char *fmt, ...);
 XPLMCommandRef find_cmd_safe(const char *fmt, ...);
 XPLMCommandRef find_cmd(const char *fmt, ...);
+
+XPLMDataRef create_dr_i(int *val, bool writeable, const char *fmt, ...);
+XPLMDataRef create_dr_f(float *val, bool writeable, const char *fmt, ...);
 
 #endif /* ifndef _XPLANE_H_ */

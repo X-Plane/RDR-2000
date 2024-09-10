@@ -207,35 +207,37 @@ static void rds_draw_screen(void *refcon) {
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    int wxr_img = XPLMGetTexture(wxr->wxr_tex_id);
-    quad_set_tex(wxr->wxr_quad, wxr_img);
+    if(wxr->mode > RDS81_MODE_OFF) {
+        int wxr_img = XPLMGetTexture(wxr->wxr_tex_id);
+        quad_set_tex(wxr->wxr_quad, wxr_img);
     
-    glBindFramebuffer(GL_FRAMEBUFFER, wxr->screen_fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, wxr->screen_fbo);
     
-    mat4 ortho;
-    glm_ortho(0, RDS_SCREEN_W, 0, RDS_SCREEN_H, -1, 1, ortho);
-    glViewport(0, 0, RDS_SCREEN_W/2, RDS_SCREEN_H/2);
+        mat4 ortho;
+        glm_ortho(0, RDS_SCREEN_W, 0, RDS_SCREEN_H, -1, 1, ortho);
+        glViewport(0, 0, RDS_SCREEN_W/2, RDS_SCREEN_H/2);
     
     
-    nvgBeginFrame(wxr->vg, RDS_SCREEN_W, RDS_SCREEN_H, 2);
-    draw_fbo(wxr, wxr->vg, ortho);
-    nvgEndFrame(wxr->vg);
+        nvgBeginFrame(wxr->vg, RDS_SCREEN_W, RDS_SCREEN_H, 2);
+        draw_fbo(wxr, wxr->vg, ortho);
+        nvgEndFrame(wxr->vg);
     
-    // Revert to how things were before we mucked with OpenGL state
-    glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
-    glViewport(old_vp[0], old_vp[1], old_vp[2], old_vp[3]);
+        // Revert to how things were before we mucked with OpenGL state
+        glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
+        glViewport(old_vp[0], old_vp[1], old_vp[2], old_vp[3]);
     
-    mat4 pvm;
-    rds_get_xp_pvm(wxr, pvm);
-    glUseProgram(wxr->screen_shader);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, wxr->crt_mask_tex);
-    glUniform1i(glGetUniformLocation(wxr->screen_shader, "mask"), 1);
-    glUniform1f(glGetUniformLocation(wxr->screen_shader, "scale"), 1.f);
-    quad_render(pvm, wxr->screen_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W * RDS_SCALE, RDS_SCREEN_H * RDS_SCALE), 0.f, 1.f);
+        mat4 pvm;
+        rds_get_xp_pvm(wxr, pvm);
+        glUseProgram(wxr->screen_shader);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, wxr->crt_mask_tex);
+        glUniform1i(glGetUniformLocation(wxr->screen_shader, "mask"), 1);
+        glUniform1f(glGetUniformLocation(wxr->screen_shader, "scale"), 1.f);
+        quad_render(pvm, wxr->screen_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W * RDS_SCALE, RDS_SCREEN_H * RDS_SCALE), 0.f, 1.f);
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 }
 
 static float rds_brightness(float rheo, float ambiant, float bus, void *refcon) {

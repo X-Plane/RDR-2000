@@ -42,7 +42,7 @@ static const knob_desc_t knob_desc[KNOB_COUNT] = {
         .pos={47, 83}, .size={69, 69},
         .type=KNOB_FLOAT,
         .min=0.f,
-        .max=2.f,
+        .max=1.f,
         .min_angle=-135,
         .max_angle=135,
     },

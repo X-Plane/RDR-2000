@@ -8,10 +8,12 @@
  *===--------------------------------------------------------------------------------------------===
 */
 #include "rds-81_impl.h"
+
 #include <XPLMGraphics.h>
 #include <cglm/mat4.h>
 #define NANOVG_GL2_IMPLEMENTATION
 #include <nanovg_gl.h>
+#include <time.h>
 
 rds81_t *wxr = NULL;
 
@@ -31,12 +33,17 @@ static const char *frag_shader_wxr =
     "#version 120\n"
     "uniform sampler2D  tex;\n"
     "uniform float      alpha;\n"
+    "uniform float      blink;\n"
     "varying vec2       tex_coord;\n"
     "void main() {\n"
+    "   vec3 magenta = vec3(1, 0, 1);\n"
+    "   vec4 trans = vec4(0, 0, 0, 0);\n"
     "   vec4 col = texture2D(tex, tex_coord);\n"
     "   float brt = (col.r + col.g + col.b) * col.a / 3.f;\n"
     "   if(brt < 0.05) discard;\n"
-    "   gl_FragColor = col;\n"
+    "   float dist_from_magenta = distance(magenta, col.rgb);\n"
+    "   float t = clamp(step(0.2, dist_from_magenta) + blink, 0, 1);\n"
+    "   gl_FragColor = mix(trans, col, t);\n"
     "}\n";
 
 static const char *vert_shader =
@@ -60,11 +67,11 @@ static const char *frag_shader =
     "varying vec2       tex_coord;\n"
     "void main() {\n"
     "   vec4 glow = vec4(0.12, 0.15, 0.2, 1.0);\n"
-    "   vec2 uv = vec2(-(1.f - scale)) + (tex_coord / scale);"
+    "   vec2 uv = vec2((tex_coord.x / scale) - 0.5 * (1.0/scale - 1.0), tex_coord.y/scale);"
     "   vec4 col = glow + texture2D(tex, uv);\n"
     "   float mask_brt = texture2D(mask, tex_coord).r;\n"
     "   gl_FragColor = col;\n"
-    "   gl_FragColor.a *= mask_brt;\n"
+    "   gl_FragColor.a *= mask_brt * alpha;\n"
     "}\n";
 
 static void rds_get_xp_pvm(rds81_t *wxr, mat4 pvm) {
@@ -145,6 +152,9 @@ static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
     if(wxr->mode > RDS81_MODE_STBY) {
+        float blink = wxr->submode != RDS81_SUBMODE_WXA ? 1.f : (time(0L) % 2);
+        glUseProgram(wxr->wxr_shader);
+        glUniform1f(glGetUniformLocation(wxr->wxr_shader, "blink"), blink);
         quad_render(pvm, wxr->wxr_quad, VEC2(WXR_POS_X, WXR_POS_Y), VEC2(WXR_W, WXR_H), 0.f, 1.f);
         quad_render(pvm, wxr->dots_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W, RDS_SCREEN_H), 0.f, 1.f);
     }
@@ -152,7 +162,6 @@ static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
     nvgFontSize(vg, 30.f);
     nvgFontFace(vg, "default");
     nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
-    
     
     // Draw Range Info
     if(wxr->mode > RDS81_MODE_STBY) {
@@ -184,9 +193,7 @@ static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
         }
     }
     
-    
     // Draw Weather Mode
-    
     if(wxr->mode != RDS81_MODE_OFF) {
         const char *mode_str = "STBY";
         switch(wxr->mode) {
@@ -249,13 +256,19 @@ static void rds_draw_screen(void *refcon) {
         glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
         glViewport(old_vp[0], old_vp[1], old_vp[2], old_vp[3]);
     
+    
+        // For the "turning on" animation, we compute the time since we turned on, then use that
+        // to simulate "warmup" (AKA the alpha slowly ramps up, and the dispaly "zooms in".)
+        double time_since_on = time_get_clock() - wxr->on_time;
+        float scale = 0.1f + 0.9f * CLAMP(powf(time_since_on / RDS_WARMUP_SCALE, 0.2f), 0.f, 1.f);
+        
         mat4 pvm;
         rds_get_xp_pvm(wxr, pvm);
         glUseProgram(wxr->screen_shader);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, wxr->crt_mask_tex);
         glUniform1i(glGetUniformLocation(wxr->screen_shader, "mask"), 1);
-        glUniform1f(glGetUniformLocation(wxr->screen_shader, "scale"), 1.f);
+        glUniform1f(glGetUniformLocation(wxr->screen_shader, "scale"), scale);
         quad_render(pvm, wxr->screen_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W * RDS_SCALE, RDS_SCREEN_H * RDS_SCALE), 0.f, 1.f);
 
         glActiveTexture(GL_TEXTURE1);
@@ -290,8 +303,14 @@ static int rds_scroll_bezel(int x, int y, int wheel, int clicks, void *refcon) {
 
 static float rds_brightness(float rheo, float ambiant, float bus, void *refcon) {
     UNUSED(refcon);
+    rds81_t *wxr = refcon;
+    ASSERT(wxr != NULL);
+    
+    double time_since_on = time_get_clock() - wxr->on_time;
+    float alpha = 0.2f + 0.8f * CLAMP(powf(time_since_on / RDS_WARMUP_ALPHA, 2), 0.f, 1.f);
+    
     float has_power = bus < 0.f || bus > 0.8f ? 1.f : 0.f;
-    return 0.02f + rheo * 1.5 * ambiant * has_power;
+    return alpha * (0.02f + rheo * 1.5 * ambiant * has_power);
 }
 
 // MARK: - "public" API

@@ -10,6 +10,7 @@
 #include "xplane.h"
 
 #include "rds-81.h"
+#include "time_sys.h"
 
 #include <glutils/gl.h>
 #include <glutils/stb_image.h>
@@ -95,6 +96,7 @@ PLUGIN_API int XPluginStart(char *name, char *sig, char *desc) {
     get_paths();
     stbi_set_flip_vertically_on_load(true);
     glewInit();
+    time_sys_init();
     rds81_declare_cmd_dr();
     log_msg("%s start done", PLUGIN_SIG);
     return 1;
@@ -128,7 +130,8 @@ PLUGIN_API void XPluginDisable(void) {
 }
 
 PLUGIN_API void XPluginStop(void) {
-    
+    rds81_unbind_dr_cmd();
+    time_sys_fini();
 }
 
 PLUGIN_API void XPluginReceiveMessage(XPLMPluginID from, int msg, void *param) {

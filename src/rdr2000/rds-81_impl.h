@@ -11,7 +11,9 @@
 #define _RDS_81_IMPL_H_
 
 #include "rds-81.h"
+#include "time_sys.h"
 #include "xplane.h"
+
 #include <glutils/gl.h>
 #include <glutils/renderer.h>
 #include <helpers/helpers.h>
@@ -23,6 +25,10 @@
 #define DR_CMD_PREFIX ""
 
 #define RDS_SCALE           1
+
+#define RDS_WARMUP_ALPHA    5.f
+#define RDS_WARMUP_SCALE    8.f
+#define RDS_WARMUP_ANTENNA  8.f
 
 #define RDS_SCREEN_W        640
 #define RDS_SCREEN_H        480
@@ -173,6 +179,9 @@ typedef struct rds81_t {
     rds81_mode_t    mode;
     rds81_submode_t submode;
     bool            stab;
+    double          on_time;
+    double          off_time;
+    
     // The RDS-81/RDR-2000 only let the pilot change the gain in MAP mode, so we need to keep track
     // of it aside from the default XP weather radar's datarefs.
     float           map_gain;

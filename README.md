@@ -1,4 +1,4 @@
-RDR-2000 For X-Plane
+# RDR-2000 For X-Plane
 
 **Buttons**
 
@@ -19,12 +19,7 @@ command  `rdr2000/popup`
 - Brightness:
     - increase: command `rdr2000/brightness_up`
     - decrease: command `rdr2000/brightness_down`
-    - value: dataref `rdr2000/brightness
-    
-- Gain:
-    - increase: command `rdr2000/brightness_up`
-    - decrease: command `rdr2000/brightness_down`
-    - value: dataref `rdr2000/brightness
+    - value: dataref `rdr2000/brightness (0.0 -> 1.0)
 
 - Mode:
     - increase: command `rdr2000/mode_up`
@@ -34,12 +29,12 @@ command  `rdr2000/popup`
 - Tilt
     - increase: command `rdr2000/tilt_up`
     - decrease: command `rdr2000/tilt_down`
-    - value: dataref `rdr2000/tilt`
+    - value: dataref `rdr2000/tilt` (-15.0 -> 15.0)
     
 - Gain
     - increase: command `rdr2000/gain_up`
     - decrease: command `rdr2000/gain_down`
-    - value: dataref `rdr2000/gain`
+    - value: dataref `rdr2000/gain` (0.0 -> 1.0)
     
 
 

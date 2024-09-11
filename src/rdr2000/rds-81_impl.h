@@ -89,11 +89,6 @@ typedef struct {
 } knob_t;
 
 typedef struct rds81_out_t {
-    int             mode;
-    float           brt;
-    float           tilt;
-    float           gain;
-    
     XPLMCommandRef  cmd_popup;
     XPLMCommandRef  cmd_popout;
     
@@ -181,6 +176,7 @@ typedef struct rds81_t {
 } rds81_t;
 
 extern rds81_out_t wxr_out;
+extern rds81_t *wxr;
 
 GLuint rds81_load_tex(const char *name);
 

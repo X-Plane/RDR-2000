@@ -35,7 +35,7 @@ typedef enum rds81_side_t {
 void rds81_declare_cmd_dr();
 rds81_side_t rds81_find_best_side();
 
-rds81_t *rds81_new(rds81_side_t side);
-void rds81_destroy(rds81_t *wxr);
+void rds81_init(rds81_side_t side);
+void rds81_fini();
 
 #endif /* ifndef _RDS_81_H_ */

@@ -13,6 +13,8 @@
 #define NANOVG_GL2_IMPLEMENTATION
 #include <nanovg_gl.h>
 
+rds81_t *wxr = NULL;
+
 static const char *vert_shader_wxr =
     "#version 120\n"
     "uniform mat4       pv;\n"
@@ -269,8 +271,10 @@ static int rds_click_bezel(int x, int y, XPLMMouseStatus mouse, void *refcon) {
     switch(mouse) {
     case xplm_MouseDown:
         rds81_click_down(wxr, (vec2){x, y});
+        break;
     case xplm_MouseUp:
         rds81_click_release(wxr);
+        break;
     }
     return wxr->act_cmd != NULL;
 }
@@ -293,42 +297,11 @@ GLuint rds81_load_tex(const char *name) {
 }
 
 // This *must* run in XPPluginStart, not enable, so OBJ can bind to our commands and datarefs.
-void rds81_declare_cmd_dr() {
-    wxr_out.cmd_popup = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/popup", "RDR2000 popup");
-    wxr_out.cmd_popout = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/popout", "RDR2000 pop out window");
-    
-    wxr_out.cmd_mode_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_up", "RDR2000 Mode Up");
-    wxr_out.cmd_mode_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_down", "RDR2000 Mode Down");
-    
-    wxr_out.cmd_brt_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/brightness_up", "RDR2000 increase brightness");
-    wxr_out.cmd_brt_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/brightness_down", "RDR2000 decrease brightness");
-    
-    wxr_out.cmd_tilt_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/tilt_up", "RDR2000 increase tilt");
-    wxr_out.cmd_tilt_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/tilt_down", "RDR2000 decrease tilt");
-    
-    wxr_out.cmd_gain_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/gain_up", "RDR2000 increase gain");
-    wxr_out.cmd_gain_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/gain_down", "RDR2000 decrease gain");
-    
-    wxr_out.cmd_off = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_off", "RDR2000 mode off");
-    wxr_out.cmd_stby = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_stby", "RDR2000 mode standby");
-    wxr_out.cmd_test = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_test", "RDR2000 mode test");
-    wxr_out.cmd_on = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_on", "RDR2000 mode on");
-    
-    wxr_out.cmd_wx = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_wx", "RDR2000 mode Wx");
-    wxr_out.cmd_wxa = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_wxa", "RDR2000 mode WxA");
-    wxr_out.cmd_map = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_map", "RDR2000 mode Map");
-    wxr_out.cmd_rng_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/range_up", "RDR2000 range up");
-    wxr_out.cmd_rng_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/range_down", "RDR2000 range down");
-    wxr_out.cmd_stab = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/stab", "RDR2000 stab");
-    
-    wxr_out.dr_mode = create_dr_i(&wxr_out.mode, true, DR_CMD_PREFIX "rdr2000/mode");
-    wxr_out.dr_brt = create_dr_f(&wxr_out.brt, true, DR_CMD_PREFIX "rdr2000/brightness");
-    wxr_out.dr_tilt = create_dr_f(&wxr_out.tilt, true, DR_CMD_PREFIX "rdr2000/tilt");
-    wxr_out.dr_gain = create_dr_f(&wxr_out.gain, true, DR_CMD_PREFIX "rdr2000/gain");
-}
 
-rds81_t *rds81_new(rds81_side_t side) {
-    rds81_t *wxr = safe_calloc(1, sizeof(*wxr));
+void rds81_init(rds81_side_t side) {
+    if(wxr != NULL)
+        return;
+    wxr = safe_calloc(1, sizeof(*wxr));
     wxr->vg = nvgCreateGL2(NVG_ANTIALIAS);
     
     // char *font_path = fs_make_path(get_plugin_dir(), "resources", "MonomaniacOne-Regular.ttf", NULL);
@@ -413,16 +386,11 @@ rds81_t *rds81_new(rds81_side_t side) {
     wxr->stab = true;
     
     rds81_reset_datarefs(wxr);
-    return wxr;
 }
 
-void rds81_destroy(rds81_t *wxr) {
-    ASSERT(wxr != NULL);
-    
-    XPLMUnregisterDataAccessor(wxr_out.dr_mode);
-    XPLMUnregisterDataAccessor(wxr_out.dr_gain);
-    XPLMUnregisterDataAccessor(wxr_out.dr_tilt);
-    XPLMUnregisterDataAccessor(wxr_out.dr_brt);
+void rds81_fini() {
+    if(wxr == NULL)
+        return;
     
     rds81_fini_kn_butt(wxr);
     rds81_unbind_commands(wxr);
@@ -445,5 +413,6 @@ void rds81_destroy(rds81_t *wxr) {
     
     XPLMDestroyAvionics(wxr->device);
     nvgDeleteGL2(wxr->vg);
+    wxr = NULL;
     free(wxr);
 }

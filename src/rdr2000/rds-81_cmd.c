@@ -66,9 +66,7 @@ static int handle_mode_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
-        int mode = wxr->mode + 1;
-        wxr->mode = CLAMP(mode, 0, 3);
-        wxr_out.mode = wxr->mode;
+        wxr->mode = CLAMP(wxr->mode + 1, 0, 3);
     }
     return 1;
 }
@@ -77,9 +75,7 @@ static int handle_mode_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
-        int mode = wxr->mode - 1;
-        wxr->mode = CLAMP(mode, 0, 3);
-        wxr_out.mode = wxr->mode;
+        wxr->mode = CLAMP(wxr->mode - 1, 0, 3);
     }
     return 1;
 }
@@ -89,7 +85,6 @@ static int handle_off(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) 
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
         wxr->mode = RDS81_MODE_OFF;
-        wxr_out.mode = wxr->mode;
     }
     return 1;
 }
@@ -99,7 +94,6 @@ static int handle_stby(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon)
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
         wxr->mode = RDS81_MODE_STBY;
-        wxr_out.mode = wxr->mode;
     }
     return 1;
 }
@@ -109,7 +103,6 @@ static int handle_test(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon)
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
         wxr->mode = RDS81_MODE_TEST;
-        wxr_out.mode = wxr->mode;
     }
     return 1;
 }
@@ -119,7 +112,6 @@ static int handle_on(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
         wxr->mode = RDS81_MODE_ON;
-        wxr_out.mode = wxr->mode;
     }
     return 1;
 }
@@ -128,8 +120,10 @@ static int handle_on(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
 static int handle_tilt_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr_out.tilt = CLAMP(wxr_out.tilt + 0.1f, -15.f, 15.f);
+    if(phase != xplm_CommandEnd) {
+        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float tilt = XPLMGetDataf(wxr->dr_tilt);
+        XPLMSetDataf(wxr->dr_tilt, CLAMP(tilt + inc, -15.f, 15.f));
     }
     return 1;
 }
@@ -137,8 +131,10 @@ static int handle_tilt_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
 static int handle_tilt_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr_out.tilt = CLAMP(wxr_out.tilt - 0.1f, -15.f, 15.f);
+    if(phase != xplm_CommandEnd) {
+        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float tilt = XPLMGetDataf(wxr->dr_tilt);
+        XPLMSetDataf(wxr->dr_tilt, CLAMP(tilt - inc, -15.f, 15.f));
     }
     return 1;
 }
@@ -146,8 +142,10 @@ static int handle_tilt_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
 static int handle_gain_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr_out.gain = CLAMP(wxr_out.gain + 0.1f, 0.f, 2.f);
+    if(phase != xplm_CommandEnd) {
+        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float gain = XPLMGetDataf(wxr->dr_gain);
+        XPLMSetDataf(wxr->dr_gain, CLAMP(gain + inc, 0.f, 2.f));
     }
     return 1;
 }
@@ -155,8 +153,10 @@ static int handle_gain_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
 static int handle_gain_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr_out.gain = CLAMP(wxr_out.gain - 0.1f, 0.f, 2.f);
+    if(phase != xplm_CommandEnd) {
+        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float gain = XPLMGetDataf(wxr->dr_gain);
+        XPLMSetDataf(wxr->dr_gain, CLAMP(gain - inc, 0.f, 2.f));
     }
     return 1;
 }
@@ -164,8 +164,10 @@ static int handle_gain_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
 static int handle_brt_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr_out.gain = CLAMP(wxr_out.brt + 0.1f, 0.f, 2.f);
+    if(phase != xplm_CommandEnd) {
+        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float brt = XPLMGetAvionicsBrightnessRheo(wxr->device);
+        XPLMSetAvionicsBrightnessRheo(wxr->device, CLAMP(brt + inc, 0.f, 1.f));
     }
     return 1;
 }
@@ -173,8 +175,10 @@ static int handle_brt_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refco
 static int handle_brt_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
-    if(phase == xplm_CommandBegin) {
-        wxr_out.gain = CLAMP(wxr_out.brt - 0.1f, 0.f, 2.f);
+    if(phase != xplm_CommandEnd) {
+        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float brt = XPLMGetAvionicsBrightnessRheo(wxr->device);
+        XPLMSetAvionicsBrightnessRheo(wxr->device, CLAMP(brt - inc, 0.f, 1.f));
     }
     return 1;
 }
@@ -236,4 +240,109 @@ void rds81_unbind_commands(rds81_t *wxr) {
     
     XPLMUnregisterCommandHandler(wxr_out.cmd_brt_up, handle_brt_up, 1, wxr);
     XPLMUnregisterCommandHandler(wxr_out.cmd_brt_dn, handle_brt_dn, 1, wxr);
+}
+
+// Dataref Handlers
+static int get_mode(void *ptr) {
+    UNUSED(ptr);
+    if(!wxr)
+        return 0;
+    return wxr->mode;
+}
+
+static void set_mode(void *ptr, int val) {
+    UNUSED(ptr);
+    if(!wxr)
+        return;
+    wxr->mode = val;
+}
+
+static float get_tilt(void *ptr) {
+    UNUSED(ptr);
+    if(!wxr)
+        return 0;
+    return XPLMGetDataf(wxr->dr_tilt);
+}
+
+static void set_tilt(void *ptr, float val) {
+    UNUSED(ptr);
+    if(!wxr)
+        return;
+    XPLMSetDataf(wxr->dr_tilt, CLAMP(val, -15.f, 15.f));
+}
+
+static float get_gain(void *ptr) {
+    UNUSED(ptr);
+    if(!wxr)
+        return 0;
+    return XPLMGetDataf(wxr->dr_gain);
+}
+
+static void set_gain(void *ptr, float val) {
+    UNUSED(ptr);
+    if(!wxr)
+        return;
+    XPLMSetDataf(wxr->dr_gain, CLAMP(val, 0.f, 2.f));
+}
+
+static float get_brt(void *ptr) {
+    UNUSED(ptr);
+    if(!wxr)
+        return 0;
+    return XPLMGetAvionicsBrightnessRheo(wxr->device);
+}
+
+static void set_brt(void *ptr, float val) {
+    UNUSED(ptr);
+    if(!wxr)
+        return;
+    XPLMSetAvionicsBrightnessRheo(wxr->device, CLAMP(val, 0.f, 1.f));
+}
+
+void rds81_declare_cmd_dr() {
+    wxr_out.cmd_popup = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/popup", "RDR2000 popup");
+    wxr_out.cmd_popout = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/popout", "RDR2000 pop out window");
+    
+    wxr_out.cmd_mode_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_up", "RDR2000 Mode Up");
+    wxr_out.cmd_mode_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_down", "RDR2000 Mode Down");
+    
+    wxr_out.cmd_brt_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/brightness_up", "RDR2000 increase brightness");
+    wxr_out.cmd_brt_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/brightness_down", "RDR2000 decrease brightness");
+    
+    wxr_out.cmd_tilt_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/tilt_up", "RDR2000 increase tilt");
+    wxr_out.cmd_tilt_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/tilt_down", "RDR2000 decrease tilt");
+    
+    wxr_out.cmd_gain_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/gain_up", "RDR2000 increase gain");
+    wxr_out.cmd_gain_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/gain_down", "RDR2000 decrease gain");
+    
+    wxr_out.cmd_off = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_off", "RDR2000 mode off");
+    wxr_out.cmd_stby = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_stby", "RDR2000 mode standby");
+    wxr_out.cmd_test = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_test", "RDR2000 mode test");
+    wxr_out.cmd_on = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_on", "RDR2000 mode on");
+    
+    wxr_out.cmd_wx = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_wx", "RDR2000 mode Wx");
+    wxr_out.cmd_wxa = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_wxa", "RDR2000 mode WxA");
+    wxr_out.cmd_map = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/mode_map", "RDR2000 mode Map");
+    wxr_out.cmd_rng_up = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/range_up", "RDR2000 range up");
+    wxr_out.cmd_rng_dn = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/range_down", "RDR2000 range down");
+    wxr_out.cmd_stab = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/stab", "RDR2000 stab");
+    
+    wxr_out.dr_mode = create_dr_i(get_mode, set_mode, NULL, DR_CMD_PREFIX "rdr2000/mode");
+    wxr_out.dr_brt = create_dr_f(get_brt, set_brt, NULL, DR_CMD_PREFIX "rdr2000/brightness");
+    wxr_out.dr_tilt = create_dr_f(get_tilt, set_tilt, NULL, DR_CMD_PREFIX "rdr2000/tilt");
+    wxr_out.dr_gain = create_dr_f(get_gain, set_gain, NULL, DR_CMD_PREFIX "rdr2000/gain");
+}
+
+void rds81_unbind_dr_cmd() {
+    XPLMUnregisterDataAccessor(wxr_out.dr_mode);
+    XPLMUnregisterDataAccessor(wxr_out.dr_gain);
+    XPLMUnregisterDataAccessor(wxr_out.dr_tilt);
+    XPLMUnregisterDataAccessor(wxr_out.dr_brt);
+    
+    wxr_out.dr_mode = NULL;
+    wxr_out.dr_gain = NULL;
+    wxr_out.dr_tilt = NULL;
+    wxr_out.dr_brt = NULL;
+    
+    memset(&wxr_out, 0, sizeof(wxr_out));
 }

@@ -34,8 +34,8 @@ static char plugin_dir[512];
 
 static rds81_t *wxr = NULL;
 
-static XPLMPluginID dataref_editor = XPLM_NO_PLUGIN_ID;
-
+static XPLMPluginID dre_id = XPLM_NO_PLUGIN_ID;
+static bool dre_lookup_done = false;
 
 static void get_paths() {
     char name[512]; // Useless, but we have to supply a pointer for the plane's name.
@@ -109,23 +109,22 @@ static float first_flight_loop(float elapsed1, float elapsed2, int count, void *
     if(wxr == NULL) {
         rds81_side_t side = rds81_find_best_side();
         if(side != RDS81_SIDE_NONE)
-            wxr = rds81_new(side);
+            rds81_init(side);
     }
     return 0;
 }
 
 PLUGIN_API int XPluginEnable(void) {
     XPLMRegisterFlightLoopCallback(first_flight_loop, -1.f, NULL);
-    dataref_editor = XPLMFindPluginBySignature("xplanesdk.examples.DataRefEditor");
     return 1;
 }
 
 PLUGIN_API void XPluginDisable(void) {
-    dataref_editor = XPLM_NO_PLUGIN_ID;
     XPLMUnregisterFlightLoopCallback(first_flight_loop, NULL);
-    if(wxr)
-        rds81_destroy(wxr);
+    rds81_fini();
     wxr = NULL;
+    dre_lookup_done = false;
+    dre_id = XPLM_NO_PLUGIN_ID;
 }
 
 PLUGIN_API void XPluginStop(void) {
@@ -193,66 +192,51 @@ XPLMCommandRef find_cmd(const char *fmt, ...) {
     return ref;
 }
 
-static void set_data_f(void *refcon, float val) {
-    *(float *)refcon = val;
-}
-
-static void set_data_d(void *refcon, double val) {
-    *(double *)refcon = val;
-}
-
-static void set_data_i(void *refcon, int val) {
-    *(int *)refcon = val;
-}
-
-static float get_data_f(void *refcon) {
-    return *(const float *)refcon;
-}
-
-static double get_data_d(void *refcon) {
-    return *(const double *)refcon;
-}
-
-static int get_data_i(void *refcon) {
-    return *(const int *)refcon;
-}
-
 static void register_dre(const char *path) {
-    if(dataref_editor == XPLM_NO_PLUGIN_ID)
+    if(!dre_lookup_done) {
+        dre_id = XPLMFindPluginBySignature("xplanesdk.examples.DataRefEditor");
+        dre_lookup_done = true;
+    }
+    if(dre_id == XPLM_NO_PLUGIN_ID)
         return;
-    XPLMSendMessageToPlugin(dataref_editor, MSG_ADD_DATAREF, (void *)path);
+    log_msg("registered `%s'", path);
+    XPLMSendMessageToPlugin(dre_id, MSG_ADD_DATAREF, (void *)path);
 }
 
-XPLMDataRef create_dr_i(int *val, bool writeable, const char *fmt, ...) {
+XPLMDataRef create_dr_i(XPLMGetDatai_f get, XPLMSetDatai_f set, void *ptr, const char *fmt, ...) {
     char buf[1024];
     va_list args;
     va_start(args, fmt);
     vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
     
-    return XPLMRegisterDataAccessor(buf, xplmType_Int, writeable,
-        get_data_i, writeable ? set_data_i : NULL,
+    XPLMDataRef ref = XPLMRegisterDataAccessor(buf, xplmType_Int, set != NULL,
+        get, set,
         NULL, NULL,
         NULL, NULL,
         NULL, NULL,
         NULL, NULL,
         NULL, NULL,
-        val, writeable ? val : NULL);
+        ptr, ptr);
+    register_dre(buf);
+    return ref;
 }
 
-XPLMDataRef create_dr_f(float *val, bool writeable, const char *fmt, ...) {
+XPLMDataRef create_dr_f(XPLMGetDataf_f get, XPLMSetDataf_f set, void *ptr, const char *fmt, ...) {
     char buf[1024];
     va_list args;
     va_start(args, fmt);
     vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
     
-    return XPLMRegisterDataAccessor(buf, xplmType_Int, writeable,
+    XPLMDataRef ref = XPLMRegisterDataAccessor(buf, xplmType_Float, set != NULL,
         NULL, NULL,
-        get_data_f, writeable ? set_data_f : NULL,
-        get_data_d, writeable ? set_data_d : NULL,
-        NULL, NULL,
+        get, set,
         NULL, NULL,
         NULL, NULL,
-        val, writeable ? val : NULL);
+        NULL, NULL,
+        NULL, NULL,
+        ptr, ptr);
+    register_dre(buf);
+    return ref;
 }

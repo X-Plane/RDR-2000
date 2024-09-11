@@ -8,8 +8,6 @@
  *===--------------------------------------------------------------------------------------------===
 */
 #include "rds-81_impl.h"
-
-
 #define BUTT(str, x, y, w, h)   (button_desc_t){.cmd=str, .pos={x, y}, .size={w, h}}
 
 static const button_desc_t button_desc[BUTTON_COUNT] = {
@@ -131,6 +129,21 @@ bool rds81_click_down(rds81_t *wxr, vec2 pos) {
         XPLMCommandBegin(butt->cmd);
         wxr->act_cmd = butt->cmd;
         return true;
+    }
+    
+    for(int i = 0; i < KNOB_COUNT; ++i) {
+        knob_t *knob = &wxr->knobs[i];
+        if(!vec2_in_rect(pos, knob->desc->pos, knob->desc->size))
+            continue;
+        
+        if(vec2_in_rect(pos, knob->desc->pos, (vec2){knob->desc->size[0]/2, knob->desc->size[1]})) {
+            // Click in the left area of the knob, call the "down" command.
+            XPLMCommandBegin(knob->cmd_dn);
+            wxr->act_cmd = knob->cmd_dn;
+        } else {
+            XPLMCommandBegin(knob->cmd_up);
+            wxr->act_cmd = knob->cmd_up;
+        }
     }
     
     return false;

@@ -30,7 +30,9 @@ XPLMDataRef find_dr(const char *fmt, ...);
 XPLMCommandRef find_cmd_safe(const char *fmt, ...);
 XPLMCommandRef find_cmd(const char *fmt, ...);
 
-XPLMDataRef create_dr_i(int *val, bool writeable, const char *fmt, ...);
-XPLMDataRef create_dr_f(float *val, bool writeable, const char *fmt, ...);
+
+
+XPLMDataRef create_dr_i(XPLMGetDatai_f get, XPLMSetDatai_f set, void *ptr, const char *fmt, ...);
+XPLMDataRef create_dr_f(XPLMGetDataf_f get, XPLMSetDataf_f set, void *ptr, const char *fmt, ...);
 
 #endif /* ifndef _XPLANE_H_ */

@@ -148,7 +148,7 @@ static int handle_gain_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
         float inc = phase == xplm_CommandBegin ? 0.05f : 0.02f;
-        wxr->map_gain = CLAMP(wxr->map_gain + inc, 0.f, 2.f);
+        wxr->map_gain = CLAMP(wxr->map_gain + inc, 0.f, 1.f);
     }
     return 1;
 }
@@ -158,7 +158,7 @@ static int handle_gain_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
         float inc = phase == xplm_CommandBegin ? 0.05f : 0.02f;
-        wxr->map_gain = CLAMP(wxr->map_gain - inc, 0.f, 2.f);
+        wxr->map_gain = CLAMP(wxr->map_gain - inc, 0.f, 1.f);
     }
     return 1;
 }

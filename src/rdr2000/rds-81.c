@@ -152,7 +152,11 @@ static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
     if(wxr->mode > RDS81_MODE_STBY) {
-        float blink = wxr->submode != RDS81_SUBMODE_WXA ? 1.f : (time(0L) % 2);
+        float blink = 1.f;
+        if(wxr->submode == RDS81_SUBMODE_WXA) {
+            double time_since_on = time_get_clock() - wxr->on_time;
+            blink = (int)(time_since_on * 2.f) % 2;
+        }
         glUseProgram(wxr->wxr_shader);
         glUniform1f(glGetUniformLocation(wxr->wxr_shader, "blink"), blink);
         quad_render(pvm, wxr->wxr_quad, VEC2(WXR_POS_X, WXR_POS_Y), VEC2(WXR_W, WXR_H), 0.f, 1.f);
@@ -237,7 +241,7 @@ static void rds_draw_screen(void *refcon) {
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    if(wxr->mode > RDS81_MODE_OFF) {
+    if(wxr->mode > RDS81_MODE_OFF && rds81_has_power(wxr)) {
         int wxr_img = XPLMGetTexture(wxr->wxr_tex_id);
         quad_set_tex(wxr->wxr_quad, wxr_img);
     
@@ -309,8 +313,8 @@ static float rds_brightness(float rheo, float ambiant, float bus, void *refcon) 
     double time_since_on = time_get_clock() - wxr->on_time;
     float alpha = 0.2f + 0.8f * CLAMP(powf(time_since_on / RDS_WARMUP_ALPHA, 2), 0.f, 1.f);
     
-    float has_power = bus < 0.f || bus > 0.8f ? 1.f : 0.f;
-    return alpha * (0.02f + rheo * 1.5 * ambiant * has_power);
+    return rds81_has_power(wxr) ? 
+        alpha * (0.01f + rheo * 1.5f * ambiant) : 0.f;
 }
 
 // MARK: - "public" API
@@ -347,6 +351,8 @@ void rds81_init(rds81_side_t side) {
     wxr->dr_mv_mat = find_dr_safe("sim/graphics/view/modelview_matrix");
     wxr->dr_fbo = find_dr_safe("sim/graphics/view/current_gl_fbo");
     wxr->dr_viewport = find_dr_safe("sim/graphics/view/viewport");
+    
+    wxr->dr_avionics_power = find_dr_safe("sim/cockpit2/switches/avionics_power_on");
     
     wxr->dr_mode = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_mode%s", side_str);
     wxr->dr_tilt = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_tilt", side_str);

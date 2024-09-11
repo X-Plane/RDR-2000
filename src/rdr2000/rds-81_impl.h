@@ -153,6 +153,8 @@ typedef struct rds81_t {
     XPLMDataRef     dr_fbo;
     XPLMDataRef     dr_viewport;
     
+    XPLMDataRef     dr_avionics_power;
+    
     XPLMDataRef     dr_mode;
     XPLMDataRef     dr_tilt;
     XPLMDataRef     dr_tilt_antenna;
@@ -203,6 +205,7 @@ bool rds81_scroll(rds81_t *wxr, vec2 pos, int clicks);
 
 void rds81_reset_datarefs(rds81_t *wxr);
 void rds81_update(rds81_t *wxr);
+bool rds81_has_power(rds81_t *wxr);
 
 #endif /* ifndef _RDS_81_IMPL_H_ */
 

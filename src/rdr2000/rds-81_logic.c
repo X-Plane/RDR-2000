@@ -68,7 +68,7 @@ void rds81_update(rds81_t *wxr) {
     // If we're off, we always reset the "On" time to now, else we set the "off" time. It sounds
     // counter-intuitive, but this means as soon as we're anything but off, the time stops updating,
     // and we have a marker for when the off->on transition happened.
-    if(wxr->mode == RDS81_MODE_OFF)
+    if(wxr->mode == RDS81_MODE_OFF || !rds81_has_power(wxr))
         wxr->on_time = time_get_clock();
     else
         wxr->off_time = time_get_clock();
@@ -87,5 +87,10 @@ void rds81_reset_datarefs(rds81_t *wxr) {
     XPLMSetDatai(wxr->dr_gcs, 0);
     XPLMSetDatai(wxr->dr_pws, 0);
     XPLMSetDatai(wxr->dr_multiscan, 0);
+}
+
+bool rds81_has_power(rds81_t *wxr) {
+    float bus_ratio = XPLMGetAvionicsBusVoltsRatio(wxr->device);
+    return bus_ratio < 0.f || XPLMGetDatai(wxr->dr_avionics_power) && bus_ratio > 0.8f;
 }
 

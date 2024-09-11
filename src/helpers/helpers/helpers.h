@@ -20,7 +20,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#define CLAMP(x, a, b)  (x < a ? a : (x > b ? b : x))
+#define CLAMP(x, a, b)  (x <= a ? a : (x >= b ? b : x))
 
 // Memory basics
 

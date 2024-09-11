@@ -22,7 +22,7 @@
  */
 
 
-#define DEVICE_ID       "RDS_81_WXR"
+#define DEVICE_ID       "RDR2000_WXR"
 #define DEVICE_NAME     "RDS-81 Weather Radar Display"
 
 typedef struct rds81_t rds81_t;

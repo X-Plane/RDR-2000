@@ -9,6 +9,10 @@
 */
 #include "rds-81_impl.h"
 
+static inline float roundN(float val, int n) {
+    float mult = pow(10, n);
+    return roundf(val * mult) / mult;
+}
 
 static int handle_submode_wx(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
     rds81_t *wxr = refcon;
@@ -66,7 +70,7 @@ static int handle_mode_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
-        wxr->mode = CLAMP(wxr->mode + 1, 0, 3);
+        wxr->mode = CLAMP((int)wxr->mode + 1, 0, 3);
     }
     return 1;
 }
@@ -75,7 +79,7 @@ static int handle_mode_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
-        wxr->mode = CLAMP(wxr->mode - 1, 0, 3);
+        wxr->mode = CLAMP((int)wxr->mode - 1, 0, 3);
     }
     return 1;
 }
@@ -143,7 +147,7 @@ static int handle_gain_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float inc = phase == xplm_CommandBegin ? 0.05f : 0.02f;
         float gain = XPLMGetDataf(wxr->dr_gain);
         XPLMSetDataf(wxr->dr_gain, CLAMP(gain + inc, 0.f, 2.f));
     }
@@ -154,7 +158,7 @@ static int handle_gain_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float inc = phase == xplm_CommandBegin ? 0.05f : 0.02f;
         float gain = XPLMGetDataf(wxr->dr_gain);
         XPLMSetDataf(wxr->dr_gain, CLAMP(gain - inc, 0.f, 2.f));
     }
@@ -165,7 +169,7 @@ static int handle_brt_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refco
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float inc = phase == xplm_CommandBegin ? 0.02f : 0.01f;
         float brt = XPLMGetAvionicsBrightnessRheo(wxr->device);
         XPLMSetAvionicsBrightnessRheo(wxr->device, CLAMP(brt + inc, 0.f, 1.f));
     }
@@ -176,7 +180,7 @@ static int handle_brt_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refco
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float inc = phase == xplm_CommandBegin ? 0.02f : 0.01f;
         float brt = XPLMGetAvionicsBrightnessRheo(wxr->device);
         XPLMSetAvionicsBrightnessRheo(wxr->device, CLAMP(brt - inc, 0.f, 1.f));
     }

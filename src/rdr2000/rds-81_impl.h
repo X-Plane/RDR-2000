@@ -187,6 +187,7 @@ void rds81_bind_commands(rds81_t *wxr);
 void rds81_unbind_commands(rds81_t *wxr);
 bool rds81_click_down(rds81_t *wxr, vec2 pos);
 bool rds81_click_release(rds81_t *wxr);
+bool rds81_scroll(rds81_t *wxr, vec2 pos, int clicks);
 
 void rds81_reset_datarefs(rds81_t *wxr);
 void rds81_update(rds81_t *wxr);

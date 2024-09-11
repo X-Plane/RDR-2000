@@ -279,9 +279,20 @@ static int rds_click_bezel(int x, int y, XPLMMouseStatus mouse, void *refcon) {
     return wxr->act_cmd != NULL;
 }
 
+static int rds_scroll_bezel(int x, int y, int wheel, int clicks, void *refcon) {
+    rds81_t *wxr = refcon;
+    ASSERT(wxr != NULL);
+    
+    if(wheel != 0)
+        return 0;
+    
+    return rds81_scroll(wxr, (vec2){x, y}, clicks);
+}
+
 static float rds_brightness(float rheo, float ambiant, float bus, void *refcon) {
     UNUSED(refcon);
-    return rheo * 1.2 * ambiant * (bus > 0.8 ? 1.f : 0.f);
+    float has_power = bus < 0.f || bus > 0.8f ? 1.f : 0.f;
+    return 0.02f + rheo * 1.5 * ambiant * has_power;
 }
 
 // MARK: - "public" API
@@ -371,6 +382,9 @@ void rds81_init(rds81_side_t side) {
         .drawCallback = rds_draw_screen,
         
         .bezelClickCallback = rds_click_bezel,
+        .bezelScrollCallback = rds_scroll_bezel,
+        
+        .brightnessCallback = rds_brightness,
         
         .deviceID = DEVICE_ID,
         .deviceName = DEVICE_NAME,

@@ -31,8 +31,8 @@ static const knob_desc_t knob_desc[KNOB_COUNT] = {
         .type=KNOB_FLOAT,
         .min=0.f,
         .max=1.f,
-        .min_angle=0,
-        .max_angle=315,
+        .min_angle=-135,
+        .max_angle=135,
     },
     (knob_desc_t){
         .cmd_up=DR_CMD_PREFIX "rdr2000/gain_up",
@@ -43,8 +43,8 @@ static const knob_desc_t knob_desc[KNOB_COUNT] = {
         .type=KNOB_FLOAT,
         .min=0.f,
         .max=2.f,
-        .min_angle=0,
-        .max_angle=315,
+        .min_angle=-135,
+        .max_angle=135,
     },
     (knob_desc_t){
         .cmd_up=DR_CMD_PREFIX "rdr2000/tilt_up",
@@ -117,6 +117,20 @@ static bool vec2_in_rect(const vec2 click, const vec2 pos, const vec2 size) {
         && click[0] <= (pos[0] + size[0]) && click[1] <= (pos[1] + size[1]);
 }
 
+bool rds81_scroll(rds81_t *wxr, vec2 pos, int clicks) {
+    for(int i = 0; i < KNOB_COUNT; ++i) {
+        knob_t *knob = &wxr->knobs[i];
+        if(!vec2_in_rect(pos, knob->desc->pos, knob->desc->size))
+            continue;
+        
+        for(int i = 0; i < abs(clicks); ++i) {
+            XPLMCommandOnce(clicks < 0 ? knob->cmd_dn : knob->cmd_up);
+        }
+        return true;
+    }
+    return false;
+}
+
 bool rds81_click_down(rds81_t *wxr, vec2 pos) {
     if(wxr->act_cmd != NULL)
         rds81_click_release(wxr);
@@ -144,6 +158,7 @@ bool rds81_click_down(rds81_t *wxr, vec2 pos) {
             XPLMCommandBegin(knob->cmd_up);
             wxr->act_cmd = knob->cmd_up;
         }
+        return true;
     }
     
     return false;

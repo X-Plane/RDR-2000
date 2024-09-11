@@ -398,6 +398,7 @@ void rds81_init(rds81_side_t side) {
     wxr->mode = RDS81_MODE_OFF;
     wxr->submode = RDS81_SUBMODE_WX;
     wxr->stab = true;
+    wxr->map_gain = 0.5f;
     
     rds81_reset_datarefs(wxr);
 }

@@ -173,6 +173,9 @@ typedef struct rds81_t {
     rds81_mode_t    mode;
     rds81_submode_t submode;
     bool            stab;
+    // The RDS-81/RDR-2000 only let the pilot change the gain in MAP mode, so we need to keep track
+    // of it aside from the default XP weather radar's datarefs.
+    float           map_gain;
 } rds81_t;
 
 extern rds81_out_t wxr_out;

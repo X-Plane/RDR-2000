@@ -31,6 +31,12 @@ void rds81_update(rds81_t *wxr) {
     XPLMSetDatai(wxr->dr_pws, 0);
     XPLMSetDatai(wxr->dr_multiscan, 0);
     
+    if(wxr->mode == RDS81_MODE_ON && wxr->submode == RDS81_SUBMODE_MAP) {
+        XPLMSetDataf(wxr->dr_gain, wxr->map_gain * 2.f);
+    } else {
+        XPLMSetDataf(wxr->dr_gain, 1.f);
+    }
+    
     switch(wxr->mode) {
     case RDS81_MODE_OFF:
     case RDS81_MODE_STBY:

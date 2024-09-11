@@ -148,8 +148,7 @@ static int handle_gain_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
         float inc = phase == xplm_CommandBegin ? 0.05f : 0.02f;
-        float gain = XPLMGetDataf(wxr->dr_gain);
-        XPLMSetDataf(wxr->dr_gain, CLAMP(gain + inc, 0.f, 2.f));
+        wxr->map_gain = CLAMP(wxr->map_gain + inc, 0.f, 2.f);
     }
     return 1;
 }
@@ -159,8 +158,7 @@ static int handle_gain_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
         float inc = phase == xplm_CommandBegin ? 0.05f : 0.02f;
-        float gain = XPLMGetDataf(wxr->dr_gain);
-        XPLMSetDataf(wxr->dr_gain, CLAMP(gain - inc, 0.f, 2.f));
+        wxr->map_gain = CLAMP(wxr->map_gain - inc, 0.f, 2.f);
     }
     return 1;
 }
@@ -279,14 +277,14 @@ static float get_gain(void *ptr) {
     UNUSED(ptr);
     if(!wxr)
         return 0;
-    return XPLMGetDataf(wxr->dr_gain);
+    return wxr->map_gain;
 }
 
 static void set_gain(void *ptr, float val) {
     UNUSED(ptr);
     if(!wxr)
         return;
-    XPLMSetDataf(wxr->dr_gain, CLAMP(val, 0.f, 2.f));
+    wxr->map_gain = CLAMP(val, 0.f, 2.f);
 }
 
 static float get_brt(void *ptr) {

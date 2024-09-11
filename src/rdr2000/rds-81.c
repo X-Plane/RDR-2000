@@ -62,10 +62,9 @@ static const char *frag_shader =
     "   vec4 glow = vec4(0.12, 0.15, 0.2, 1.0);\n"
     "   vec2 uv = vec2(-(1.f - scale)) + (tex_coord / scale);"
     "   vec4 col = glow + texture2D(tex, uv);\n"
-    "   vec4 p = texture2D(mask, tex_coord);\n"
-    "   float p_dot = (p.r + p.g + p.b) / 3.f;\n"
+    "   float mask_brt = texture2D(mask, tex_coord).r;\n"
     "   gl_FragColor = col;\n"
-    "   gl_FragColor.a *= p_dot;\n"
+    "   gl_FragColor.a *= mask_brt;\n"
     "}\n";
 
 static void rds_get_xp_pvm(rds81_t *wxr, mat4 pvm) {

@@ -153,42 +153,7 @@ GLuint gl_load_tex(const char *path, int *w, int *h) {
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *w, *h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     free(data);
-
-    log_msg("loaded texture `%s` (%dx%d px)", path, *w, *h);
     return tex;
-}
-
-void gl_ortho(float proj[16], float x, float y, float width, float height) {
-    ASSERT(proj);
-    // float x_max = (x+width) -1;
-    // float y_max = (y+height) -1;
-    float z_near = 1.0;
-    float z_far = -1.0;
-    
-    float left = x;
-    float right = x + width;
-    float top = y;
-    float bottom = y + height;
-
-    proj[0] = 2.f / (right-left);
-    proj[1] = 0.f;
-    proj[2] = 0.f;
-    proj[3] = - (right + left) / (right - left);
-
-    proj[4] = 0.f;
-    proj[5] = 2.f / (top-bottom);
-    proj[6] = 0.f;
-    proj[7] = - (top + bottom) / (top - bottom);
-
-    proj[8] = 0.f;
-    proj[9] = 0.f;
-    proj[10] = -2.f / (z_far-z_near);
-    proj[11] = (z_near+z_far)/(z_near-z_far);
-
-    proj[12] = 0.f;
-    proj[13] = 0.f;
-    proj[14] = 0.f;
-    proj[15] = 1.f;
 }
 
 void check_gl(const char *where, int line) {

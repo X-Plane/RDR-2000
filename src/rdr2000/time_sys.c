@@ -16,6 +16,7 @@
 #include <sys/time.h>
 #endif	/* !IBM */
 #include <stdlib.h>
+#include <time.h>
 #include <helpers/helpers.h>
 #include <XPLMProcessing.h>
 

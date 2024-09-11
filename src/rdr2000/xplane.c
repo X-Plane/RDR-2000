@@ -46,9 +46,9 @@ static void get_paths() {
     XPLMGetNthAircraftModel(XPLM_USER_AIRCRAFT, name, plane_dir);
     
 #if	IBM
-	fix_path_inplace(xplane_dir);
-	fix_path_inplace(plugin_dir);
-	fix_path_inplace(plane_dir);
+	fs_fix_path_inplace(xplane_dir);
+	fs_fix_path_inplace(plugin_dir);
+	fs_fix_path_inplace(plane_dir);
 #endif	/* IBM */
     
 	/* cut off the trailing path component (our filename) */

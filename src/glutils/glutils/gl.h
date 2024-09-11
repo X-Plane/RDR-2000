@@ -13,7 +13,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <cglm/cglm.h>
-#include <GL/glew.h>
+#include <glew.h>
 
 #ifndef NDEBUG
 #define GL_DEBUG

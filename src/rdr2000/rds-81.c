@@ -118,8 +118,8 @@ static void rds_draw_knobs(rds81_t *wxr, mat4 pvm) {
             knob->desc->min_angle, knob->desc->max_angle);
         
         
-        vec2 pos = (vec2){knob->desc->pos[0], knob->desc->pos[1]};
-        vec2 size = (vec2){knob->desc->size[0] * RDS_SCALE, knob->desc->size[1] * RDS_SCALE};
+        vec2 pos = {knob->desc->pos[0], knob->desc->pos[1]};
+        vec2 size = {knob->desc->size[0] * RDS_SCALE, knob->desc->size[1] * RDS_SCALE};
         quad_render(pvm, knob->quad, pos, size, -angle, 1.f);
     }
 }

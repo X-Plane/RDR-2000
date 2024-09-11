@@ -16,4 +16,10 @@ set(SRC nanovg/src/nanovg.c)
 
 add_library(nanovg STATIC nanovg/src/nanovg.c)
 target_include_directories(nanovg PUBLIC nanovg/src PRIVATE nanovg/src)
+set_target_properties(nanovg PROPERTIES
+    C_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
+    POSITION_INDEPENDENT_CODE ON
+)
 
+add_subdirectory(glew)

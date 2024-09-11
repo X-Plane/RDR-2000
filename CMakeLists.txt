@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.12)
 project(rdr2000 VERSION 1.0.0 LANGUAGES C)
 
 include(cmake/xplm.cmake)
-find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 
 include_directories(${GLEW_INCLUDE_DIRS})

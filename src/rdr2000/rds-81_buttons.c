@@ -170,3 +170,28 @@ bool rds81_click_release(rds81_t *wxr) {
     wxr->act_cmd = NULL;
     return true;
 }
+
+bool rds81_cursor(rds81_t *wxr, vec2 pos) {
+    for(int i = 0; i < BUTTON_COUNT && wxr->cur_click; ++i) {
+        button_t *butt = &wxr->buttons[i];
+        if(!vec2_in_rect(pos, butt->desc->pos, butt->desc->size))
+            continue;
+        cursor_make_current(wxr->cur_click);
+        return true;
+    }
+    
+    for(int i = 0; i < KNOB_COUNT && wxr->cur_rotate_left && wxr->cur_rotate_right; ++i) {
+        knob_t *knob = &wxr->knobs[i];
+        if(!vec2_in_rect(pos, knob->desc->pos, knob->desc->size))
+            continue;
+        
+        if(vec2_in_rect(pos, knob->desc->pos, (vec2){knob->desc->size[0]/2, knob->desc->size[1]})) {
+            cursor_make_current(wxr->cur_rotate_left);
+        } else {
+            cursor_make_current(wxr->cur_rotate_right);
+        }
+        return true;
+    }
+    
+    return false;
+}

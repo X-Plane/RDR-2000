@@ -11,6 +11,8 @@
 #define _RDS_81_IMPL_H_
 
 #include "rds-81.h"
+
+#include "cursor.h"
 #include "time_sys.h"
 #include "xplane.h"
 
@@ -177,6 +179,10 @@ typedef struct rds81_t {
     button_t        buttons[BUTTON_COUNT];
     XPLMCommandRef  act_cmd;
     
+    cursor_t        *cur_click;
+    cursor_t        *cur_rotate_left;
+    cursor_t        *cur_rotate_right;
+    
     // Logic data
     rds81_mode_t    mode;
     rds81_submode_t submode;
@@ -202,6 +208,7 @@ void rds81_unbind_commands(rds81_t *wxr);
 bool rds81_click_down(rds81_t *wxr, vec2 pos);
 bool rds81_click_release(rds81_t *wxr);
 bool rds81_scroll(rds81_t *wxr, vec2 pos, int clicks);
+bool rds81_cursor(rds81_t *wxr, vec2 pos);
 
 void rds81_reset_datarefs(rds81_t *wxr);
 void rds81_update(rds81_t *wxr);

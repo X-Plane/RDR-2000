@@ -305,6 +305,12 @@ static int rds_scroll_bezel(int x, int y, int wheel, int clicks, void *refcon) {
     return rds81_scroll(wxr, (vec2){x, y}, clicks);
 }
 
+static XPLMCursorStatus rds_cursor_bezel(int x, int y, void *refcon) {
+    rds81_t *wxr = refcon;
+    ASSERT(wxr != NULL);
+    return rds81_cursor(wxr, (vec2){x, y}) ? xplm_CursorCustom : xplm_CursorDefault;
+}
+
 static float rds_brightness(float rheo, float ambiant, float bus, void *refcon) {
     UNUSED(refcon);
     rds81_t *wxr = refcon;
@@ -327,6 +333,15 @@ GLuint rds81_load_tex(const char *name) {
         log_msg("could not load texture `%s'", path);
     free(path);
     return tex;
+}
+
+cursor_t* rds81_load_cursor(const char *name) {
+    char *path = fs_make_path(get_plugin_dir(), "resources", name, NULL);
+    cursor_t *cur = cursor_read_from_file(path);
+    if(cur == NULL)
+        log_msg("could not load cursor `%s'", path);
+    free(path);
+    return cur;
 }
 
 // This *must* run in XPPluginStart, not enable, so OBJ can bind to our commands and datarefs.
@@ -392,6 +407,10 @@ void rds81_init(rds81_side_t side) {
     wxr->dots_quad = quad_new(wxr->dots_tex, 0);
     wxr->wxr_quad = quad_new(0, wxr->wxr_shader);
     
+    wxr->cur_click = rds81_load_cursor("cursor_click.png");
+    wxr->cur_rotate_left = rds81_load_cursor("cursor_rot_left.png");
+    wxr->cur_rotate_right = rds81_load_cursor("cursor_rot_right.png");
+    
     // Create the XP avionics device
     XPLMCreateAvionics_t desc = {
         .structSize = sizeof(XPLMCreateAvionics_t),
@@ -407,6 +426,7 @@ void rds81_init(rds81_side_t side) {
         
         .bezelClickCallback = rds_click_bezel,
         .bezelScrollCallback = rds_scroll_bezel,
+        .bezelCursorCallback = rds_cursor_bezel,
         
         .brightnessCallback = rds_brightness,
         
@@ -449,6 +469,13 @@ void rds81_fini() {
     glDeleteTextures(1, &wxr->bezel_tex);
     glDeleteTextures(1, &wxr->crt_mask_tex);
     glDeleteFramebuffers(1, &wxr->screen_fbo);
+    
+    if(wxr->cur_click)
+        cursor_free(wxr->cur_click);
+    if(wxr->cur_rotate_left)
+        cursor_free(wxr->cur_rotate_left);
+    if(wxr->cur_rotate_right)
+        cursor_free(wxr->cur_rotate_right);
     
     XPLMDestroyAvionics(wxr->device);
     nvgDeleteGL2(wxr->vg);

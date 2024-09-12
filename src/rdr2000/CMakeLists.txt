@@ -1,7 +1,18 @@
 set(SRC rds-81.c rds-81_buttons.c rds-81_cmd.c rds-81_logic.c time_sys.c xplane.c)
-set(HDR rds-81_impl.h rds-81.h time_sys.h xplane.h)
+if(APPLE)
+    list(APPEND SRC os/cursor-mac.m)
+elseif(WIN32)
+    list(APPEND SRC os/cursor-win.c)
+else()
+    list(APPEND SRC os/cursor-lin.c)
+    find_package(X11 REQUIRED)
+endif()
+set(HDR cursor.h rds-81_impl.h rds-81.h time_sys.h xplane.h)
 set(ALL_SRC ${SRC} ${HDR})
-
 
 add_xplane_plugin(${CMAKE_PROJECT_NAME} 411 ${ALL_SRC})
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC nanovg glutils helpers xpwidgets xplm)
+
+if(NOT APPLE AND NOT WIN32)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC X11::Xcursor)
+endif()

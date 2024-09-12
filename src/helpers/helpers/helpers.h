@@ -17,10 +17,17 @@
 
 #define UNUSED(x)   ((void)(x))
     
+#ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef CLAMP
 #define CLAMP(x, a, b)  (x <= a ? a : (x >= b ? b : x))
+#endif
 
 // Memory basics
 

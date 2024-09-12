@@ -125,7 +125,7 @@ static int handle_tilt_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float inc = 0.05f;
         float tilt = XPLMGetDataf(wxr->dr_tilt);
         XPLMSetDataf(wxr->dr_tilt, CLAMP(tilt + inc, -15.f, 15.f));
     }
@@ -136,7 +136,7 @@ static int handle_tilt_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.1f : 0.05f;
+        float inc = 0.05f;
         float tilt = XPLMGetDataf(wxr->dr_tilt);
         XPLMSetDataf(wxr->dr_tilt, CLAMP(tilt - inc, -15.f, 15.f));
     }
@@ -147,7 +147,7 @@ static int handle_gain_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.05f : 0.02f;
+        float inc = 0.02f;
         wxr->map_gain = CLAMP(wxr->map_gain + inc, 0.f, 1.f);
     }
     return 1;
@@ -157,7 +157,7 @@ static int handle_gain_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.05f : 0.02f;
+        float inc = 0.02f;
         wxr->map_gain = CLAMP(wxr->map_gain - inc, 0.f, 1.f);
     }
     return 1;
@@ -167,7 +167,7 @@ static int handle_brt_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refco
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.02f : 0.01f;
+        float inc = 0.01f;
         float brt = XPLMGetAvionicsBrightnessRheo(wxr->device);
         XPLMSetAvionicsBrightnessRheo(wxr->device, CLAMP(brt + inc, 0.f, 1.f));
     }
@@ -178,7 +178,7 @@ static int handle_brt_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refco
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase != xplm_CommandEnd) {
-        float inc = phase == xplm_CommandBegin ? 0.02f : 0.01f;
+        float inc = 0.01f;
         float brt = XPLMGetAvionicsBrightnessRheo(wxr->device);
         XPLMSetAvionicsBrightnessRheo(wxr->device, CLAMP(brt - inc, 0.f, 1.f));
     }

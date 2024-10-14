@@ -376,7 +376,7 @@ void rds81_init(rds81_side_t side) {
     
     wxr->dr_stab = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_stab%s", side_str);
     wxr->dr_gcs = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_gcs%s", side_str);
-    wxr->dr_pws = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_pws%s", side_str);
+    wxr->dr_pws = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_pws");
     wxr->dr_multiscan = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_multiscan%s", side_str);
     
     wxr->dr_sector_brg = find_dr_safe("sim/cockpit2/EFIS/EFIS_weather_sector_brg");

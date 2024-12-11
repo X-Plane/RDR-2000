@@ -121,6 +121,7 @@ function(add_xplane_plugin lib_name SDK_VERSION ...)
     set_target_properties(${lib_name} PROPERTIES SUFFIX "")
     set_target_properties(${lib_name} PROPERTIES OUTPUT_NAME "${lib_name}.xpl")
     include_directories(${lib_name} PUBLIC ${XPLM_INCLUDE_DIR})
+    set_target_properties(${lib_name} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
     set_target_xplm_version(${lib_name} ${SDK_VERSION})
     
     

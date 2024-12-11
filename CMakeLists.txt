@@ -7,6 +7,11 @@ find_package(OpenGL REQUIRED)
 include_directories(${GLEW_INCLUDE_DIRS})
 add_definitions("-DGL_SILENCE_DEPRECATION=1")
 
+if(APPLE)
+	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version" FORCE)
+endif()
+
 use_static_libc()
 find_xplane_sdk("${PROJECT_SOURCE_DIR}/SDK")
 

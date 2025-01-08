@@ -1,5 +1,9 @@
 # RDR-2000 For X-Plane
 
+**Display**
+
+- device ID (use in Blender as "Plugin-based device"): `RDR2000_WXR`
+
 **Buttons**
 
 - Wx: command `rdr2000/mode_wx`
@@ -19,7 +23,7 @@ command  `rdr2000/popup`
 - Brightness:
     - increase: command `rdr2000/brightness_up`
     - decrease: command `rdr2000/brightness_down`
-    - value: dataref `rdr2000/brightness (0.0 -> 1.0)
+    - value: dataref `rdr2000/brightness` (0.0 -> 1.0)
 
 - Mode:
     - increase: command `rdr2000/mode_up`

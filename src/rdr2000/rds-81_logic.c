@@ -26,14 +26,16 @@ void rds81_update(rds81_t *wxr) {
     // Hard-set some of the weather radar datarefs so we don't end up in weird, non realistic
     // situations
     XPLMSetDataf(wxr->dr_sector_brg, 0);
-    // This is slightly more than we actually display, but lets us do some fuzzing of the data
-    // in the antenna shader
-    XPLMSetDataf(wxr->dr_sector_width, RDS_ANT_LIM + 5);
-    XPLMSetDataf(wxr->dr_antenna_limit, RDS_ANT_LIM + 5);
     XPLMSetDatai(wxr->dr_auto_tilt, 0);
     XPLMSetDatai(wxr->dr_gcs, 0);
     XPLMSetDatai(wxr->dr_pws, 0);
     XPLMSetDatai(wxr->dr_multiscan, 0);
+    XPLMSetDatai(wxr->dr_vertical, 0);
+
+    // This is more than we actually display, but lets us do some fuzzing of the data
+    // in the antenna shader (mostly: we can simulate smearing at long ranges).
+    XPLMSetDataf(wxr->dr_sector_width, RDS_ANT_LIM + 10);
+    XPLMSetDataf(wxr->dr_antenna_limit, RDS_ANT_LIM + 10);
     
     // The RDS-81 only uses the pilot-set gain when it's in GND MAP mode. So outside that mode,
     // we just set it to 1.f (which is the "use calibrated gain" value for XP WXR).

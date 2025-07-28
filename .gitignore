@@ -2,3 +2,5 @@
 build
 *.tmp
 *.xpl
+*.zip
+build/*

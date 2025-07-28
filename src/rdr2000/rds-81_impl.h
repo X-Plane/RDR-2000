@@ -181,6 +181,7 @@ typedef struct rds81_t {
     XPLMDataRef     dr_sector_width;
     XPLMDataRef     dr_antenna_limit;
     XPLMDataRef     dr_multiscan;
+    XPLMDataRef     dr_vertical;
     
     XPLMDataRef     dr_range_idx;
     XPLMDataRef     dr_range;

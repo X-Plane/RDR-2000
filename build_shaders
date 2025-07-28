@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+function build_shader() {
+    SRC=$1
+    DEST=$2
+    
+    SPIRV="$DEST.spv"
+    GL120="$DEST.120"
+    GL420="$DEST.420"
+    
+    glslc --target-env=opengl -o "$SPIRV" "$SRC"
+    spirv-cross "$SPIRV" --extension GL_EXT_gpu_shader4 --version 120 --output "$GL120"
+    spirv-cross "$SPIRV" --no-420pack-extension --version 420 --output "$GL420"
+    rm "$SPIRV"
+}
+
+function do_shaders() {
+    PROJ=$1
+    
+    SRC_DIR="shaders"
+    OUT_DIR="$PROJ/resources/shaders"
+    
+    for f in $SRC_DIR/*; do
+        BASE=$(basename $f)
+        build_shader "$SRC_DIR/$BASE" "$OUT_DIR/$BASE"
+        echo "$f"
+    done
+}
+
+
+do_shaders 'rdr2000'

@@ -77,6 +77,14 @@ void quad_set_tex(gl_quad_t *quad, unsigned tex) {
     quad->tex = tex;
 }
 
+
+void quad_set_shader(gl_quad_t *quad, unsigned shader) {
+    if(quad->own_shader)
+        glDeleteProgram(quad->shader);
+    quad->shader = shader;
+    quad->own_shader = false;
+}
+
 void quad_fini(gl_quad_t *quad) {
     if(quad->own_shader)
         glDeleteProgram(quad->shader);

@@ -1,0 +1,25 @@
+#version 120
+#ifdef GL_ARB_shading_language_420pack
+#extension GL_ARB_shading_language_420pack : require
+#endif
+#extension GL_EXT_gpu_shader4 : require
+
+uniform float scale;
+uniform sampler2D tex;
+uniform float blink;
+uniform sampler2D mask;
+uniform float alpha;
+
+varying vec2 tex_coord;
+
+void main()
+{
+    vec2 uv = vec2((tex_coord.x / scale) - (0.5 * ((1.0 / scale) - 1.0)), tex_coord.y / scale);
+    vec4 wxr_col = texture2D(tex, uv);
+    float dist_from_magenta = distance(vec3(1.0, 0.0, 1.0), wxr_col.xyz);
+    float t = clamp(step(0.20000000298023223876953125, dist_from_magenta) + blink, 0.0, 1.0);
+    vec4 col = vec4(0.119999997317790985107421875, 0.1500000059604644775390625, 0.20000000298023223876953125, 1.0) + (wxr_col * t);
+    vec4 mask_brt = texture2D(mask, tex_coord);
+    gl_FragData[0] = ((col * mask_brt.x) * mask_brt.w) * alpha;
+}
+

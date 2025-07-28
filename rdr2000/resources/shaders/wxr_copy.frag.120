@@ -1,0 +1,22 @@
+#version 120
+#ifdef GL_ARB_shading_language_420pack
+#extension GL_ARB_shading_language_420pack : require
+#endif
+#extension GL_EXT_gpu_shader4 : require
+
+uniform sampler2D tex;
+uniform float alpha;
+
+varying vec2 tex_coord;
+
+void main()
+{
+    vec4 col = texture2D(tex, tex_coord);
+    float brt = (((col.x + col.y) + col.z) * col.w) / 3.0;
+    if (brt < 0.0500000007450580596923828125)
+    {
+        discard;
+    }
+    gl_FragData[0] = col;
+}
+

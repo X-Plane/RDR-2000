@@ -14,8 +14,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
 #define UNUSED(x)   ((void)(x))
+
+#define DEG2RAD(x)  ((x) * M_PI / 180.f)
+#define RAD2DEG(x)  ((x) * 180.f / M_PI)
     
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

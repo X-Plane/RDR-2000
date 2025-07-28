@@ -56,11 +56,13 @@ static int handle_range_buttons(XPLMCommandRef cmd, XPLMCommandPhase phase, void
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
         int range = XPLMGetDatai(wxr->dr_range_idx);
+        int old_range = range;
         if(cmd == wxr_out.cmd_rng_up)
             range += 1;
         else if(cmd == wxr_out.cmd_rng_dn)
             range -= 1;
         range = CLAMP(range, 0, 6);
+        wxr->ant_clear = range != old_range;
         XPLMSetDatai(wxr->dr_range_idx, range);
     }
     return 1;
@@ -70,7 +72,9 @@ static int handle_mode_up(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
-        wxr->mode = CLAMP((int)wxr->mode + 1, 0, 3);
+        int mode = CLAMP((int)wxr->mode + 1, 0, 3);
+        wxr->ant_clear = wxr->mode != mode;
+        wxr->mode = mode;
     }
     return 1;
 }
@@ -79,7 +83,9 @@ static int handle_mode_dn(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refc
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
-        wxr->mode = CLAMP((int)wxr->mode - 1, 0, 3);
+        int mode = CLAMP((int)wxr->mode - 1, 0, 3);
+        wxr->ant_clear = wxr->mode != mode;
+        wxr->mode = mode;
     }
     return 1;
 }
@@ -89,6 +95,7 @@ static int handle_off(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) 
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
         wxr->mode = RDS81_MODE_OFF;
+        wxr->ant_clear = true;
     }
     return 1;
 }
@@ -98,6 +105,7 @@ static int handle_stby(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon)
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
         wxr->mode = RDS81_MODE_STBY;
+        wxr->ant_clear = true;
     }
     return 1;
 }
@@ -106,6 +114,7 @@ static int handle_test(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon)
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
+        wxr->ant_clear = wxr->mode != RDS81_MODE_TEST;
         wxr->mode = RDS81_MODE_TEST;
     }
     return 1;
@@ -115,6 +124,7 @@ static int handle_on(XPLMCommandRef cmd, XPLMCommandPhase phase, void *refcon) {
     rds81_t *wxr = refcon;
     ASSERT(wxr != NULL);
     if(phase == xplm_CommandBegin) {
+        wxr->ant_clear = wxr->mode != RDS81_MODE_ON;
         wxr->mode = RDS81_MODE_ON;
     }
     return 1;

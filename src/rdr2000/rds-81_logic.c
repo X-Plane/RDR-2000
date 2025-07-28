@@ -26,8 +26,10 @@ void rds81_update(rds81_t *wxr) {
     // Hard-set some of the weather radar datarefs so we don't end up in weird, non realistic
     // situations
     XPLMSetDataf(wxr->dr_sector_brg, 0);
-    XPLMSetDataf(wxr->dr_sector_width, 45);
-    XPLMSetDataf(wxr->dr_antenna_limit, 45);
+    // This is slightly more than we actually display, but lets us do some fuzzing of the data
+    // in the antenna shader
+    XPLMSetDataf(wxr->dr_sector_width, RDS_ANT_LIM + 5);
+    XPLMSetDataf(wxr->dr_antenna_limit, RDS_ANT_LIM + 5);
     XPLMSetDatai(wxr->dr_auto_tilt, 0);
     XPLMSetDatai(wxr->dr_gcs, 0);
     XPLMSetDatai(wxr->dr_pws, 0);
@@ -64,20 +66,40 @@ void rds81_update(rds81_t *wxr) {
         wxr->submode = RDS81_SUBMODE_WX;
     }
     
+    // Update the antenna scan
+    if(wxr->mode <= RDS81_MODE_STBY || !rds81_has_power(wxr)) {
+        wxr->ant_dir = 1;
+        wxr->ant_angle = -45;
+        wxr->ant_clear = true;
+    } else {
+        const float ant_spd = 45.f/2.f;
+        wxr->ant_angle_last = wxr->ant_angle;
+        float new_angle = wxr->ant_angle + wxr->ant_dir * ant_spd * time_get_dt();
+    
+        if(new_angle > RDS_ANT_LIM) {
+            new_angle = RDS_ANT_LIM;
+            wxr->ant_dir = -1;
+        }
+        if(new_angle < -RDS_ANT_LIM) {
+            new_angle = -RDS_ANT_LIM;
+            wxr->ant_dir = 1;
+        }
+        wxr->ant_angle = new_angle;
+    }
     
     // If we're off, we always reset the "On" time to now, else we set the "off" time. It sounds
     // counter-intuitive, but this means as soon as we're anything but off, the time stops updating,
     // and we have a marker for when the off->on transition happened.
-    if(wxr->mode == RDS81_MODE_OFF || !rds81_has_power(wxr))
+    if(wxr->mode == RDS81_MODE_OFF || !rds81_has_power(wxr)) {
         wxr->on_time = time_get_clock();
-    else
+    } else {
         wxr->off_time = time_get_clock();
+    }
 }
 
 void rds81_reset_datarefs(rds81_t *wxr) {
     XPLMSetDatai(wxr->dr_mode, 0);
     XPLMSetDatai(wxr->dr_stab, 1);
-    
     
     XPLMSetDataf(wxr->dr_sector_brg, 0);
     XPLMSetDataf(wxr->dr_sector_width, 90);

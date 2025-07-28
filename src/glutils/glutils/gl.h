@@ -50,6 +50,7 @@ typedef struct vect2_t {
 
 GLuint gl_fbo_new(unsigned width, unsigned height, GLuint *tex);
 
+GLuint gl_program_new_file(const char *vertex, const char *fragment);
 GLuint gl_program_new(const char *vertex, const char *fragment);
 GLuint gl_load_shader(const char *source, int type);
 GLuint gl_load_tex(const char *path, int *w, int *h);

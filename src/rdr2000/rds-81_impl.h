@@ -24,8 +24,11 @@
 #include <XPLMDisplay.h>
 #include <XPLMGraphics.h>
 
+#define RDS_DEBUG_SHADERS
+
 #define DR_CMD_PREFIX ""
 
+#define RDS_ANT_LIM         45.f
 #define RDS_SCALE           1
 
 #define RDS_WARMUP_ALPHA    5.f
@@ -130,16 +133,21 @@ typedef struct rds81_out_t {
 } rds81_out_t;
 
 typedef struct rds81_t {
+    GLuint          wxr_fbo;
+    GLuint          wxr_tex;
     GLuint          screen_fbo;
     GLuint          screen_tex;
-    GLuint          screen_shader;
-    GLuint          wxr_shader;
+    GLuint          shader_screen;
+    GLuint          shader_ant;
+    GLuint          shader_wxr;
+    GLuint          shader_test;
     GLuint          bezel_tex;
     GLuint          dots_tex;
     GLuint          crt_mask_tex;
     
     gl_quad_t       *bezel_quad;
     gl_quad_t       *screen_quad;
+    gl_quad_t       *src_quad;
     gl_quad_t       *dots_quad;
     gl_quad_t       *wxr_quad;
     
@@ -190,9 +198,20 @@ typedef struct rds81_t {
     double          on_time;
     double          off_time;
     
+    // Antenna tracking
+    float           ant_angle;
+    float           ant_angle_last;
+    int             ant_dir;
+    bool            ant_clear;
+    
     // The RDS-81/RDR-2000 only let the pilot change the gain in MAP mode, so we need to keep track
     // of it aside from the default XP weather radar's datarefs.
     float           map_gain;
+    
+#ifdef RDS_DEBUG_SHADERS
+    XPLMCommandRef  reload_shaders_cmd;
+    int             reload_shaders_menu;
+#endif
 } rds81_t;
 
 extern rds81_out_t wxr_out;

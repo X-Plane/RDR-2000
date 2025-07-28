@@ -104,6 +104,44 @@ GLuint gl_program_new(const char *vertex, const char *fragment) {
     return prog;
 }
 
+static char *load_file(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if(f == NULL) {
+        log_msg("shader load error: cannot open '%s'", path);
+        return NULL;
+    }
+    
+    fseek(f, 0, SEEK_END);
+    size_t size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    
+    char *src = safe_calloc(1, size+1);
+    fread(src, 1, size, f);
+    src[size] = '\0';
+    fclose(f);
+    
+    return src;
+}
+
+GLuint gl_program_new_file(const char *vert_path, const char *frag_path) {
+    ASSERT(vert_path);
+    ASSERT(frag_path);
+    
+    GLuint prog = 0;
+    char *vert = load_file(vert_path);
+    char *frag = load_file(frag_path);
+    
+    if(vert != NULL && frag != NULL) {
+        prog = gl_program_new(vert, frag);
+    }
+    
+    if(vert != NULL)
+        free(vert);
+    if(frag != NULL)
+        free(frag);
+    return prog;
+}
+
 GLuint gl_load_shader(const char *source, int type) {
     ASSERT(source);
     ASSERT(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER);

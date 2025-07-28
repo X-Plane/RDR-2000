@@ -1,0 +1,19 @@
+#version 420
+
+layout(binding = 0) uniform sampler2D tex;
+uniform float alpha;
+
+layout(location = 0) in vec2 tex_coord;
+layout(location = 0) out vec4 out_color;
+
+void main()
+{
+    vec4 col = texture(tex, tex_coord);
+    float brt = (((col.x + col.y) + col.z) * col.w) / 3.0;
+    if (brt < 0.0500000007450580596923828125)
+    {
+        discard;
+    }
+    out_color = col;
+}
+

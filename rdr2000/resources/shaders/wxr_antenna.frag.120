@@ -1,0 +1,110 @@
+#version 120
+#ifdef GL_ARB_shading_language_420pack
+#extension GL_ARB_shading_language_420pack : require
+#endif
+#extension GL_EXT_gpu_shader4 : require
+
+uniform vec2 aspect;
+uniform float range;
+uniform sampler2D tex;
+uniform float ant_lim;
+uniform float angle_start;
+uniform float angle_end;
+
+varying vec2 tex_coord;
+vec4 colors[5];
+
+vec4 map_color(inout float W)
+{
+    W = pow(W, 1.7999999523162841796875) * 5.0;
+    return colors[clamp(int(W), 0, 4)];
+}
+
+vec2 beam_uv(vec2 beam)
+{
+    return vec2(0.5, 0.0) + (beam / aspect);
+}
+
+float random2(vec2 st)
+{
+    return fract(sin(dot(st, vec2(12.98980045318603515625, 78.233001708984375))) * 43758.546875);
+}
+
+float attenuation(vec2 beam)
+{
+    float integ = 0.0;
+    float dist = range * length(beam);
+    int n = int((dist / 120.0) * 40.0);
+    for (int i = 0; i < n; i++)
+    {
+        float mult = float(i) / float(n);
+        vec2 param = beam * mult;
+        integ += (texture2D(tex, beam_uv(param)).x / 40.0);
+        if ((mult * range) > dist)
+        {
+            break;
+        }
+    }
+    vec2 param_1 = beam;
+    return 2.0 * mix(random2(param_1), integ, 1.0);
+}
+
+vec2 rotate_beam(vec2 beam, float angle)
+{
+    float cos_ang = cos(angle);
+    float sin_ang = sin(angle);
+    mat2 rot_ang = mat2(vec2(cos_ang, -sin_ang), vec2(sin_ang, cos_ang));
+    return rot_ang * beam;
+}
+
+float sample_radar(vec2 beam, float dist)
+{
+    float s1 = sin((dist / 2.0) * 16.1802997589111328125);
+    float s2 = sin((dist / 2.0) * 95.8280029296875);
+    float s3 = sin((dist / 2.0) * 181.9589996337890625);
+    float s4 = sin((dist / 2.0) * 314.15899658203125);
+    float s5 = sin((dist / 2.0) * 547.36297607421875);
+    float smear_s = ((((5.0 * s1) * s2) * s3) * s4) * s5;
+    vec2 param = beam;
+    float param_1 = radians(smear_s);
+    vec2 param_2 = rotate_beam(param, param_1);
+    vec2 uv = beam_uv(param_2);
+    vec2 param_3 = uv;
+    return (0.100000001490116119384765625 * abs(random2(param_3))) + texture2D(tex, uv).x;
+}
+
+float rand_noise(float beam_dist)
+{
+    vec2 param = tex_coord * 0.00999999977648258209228515625;
+    return (beam_dist * 0.0500000007450580596923828125) * random2(param);
+}
+
+void main()
+{
+    colors = vec4[](vec4(0.0, 0.0, 0.0, 1.0), vec4(0.0, 1.0, 0.20000000298023223876953125, 1.0), vec4(1.0, 1.0, 0.0, 1.0), vec4(1.0, 0.0, 0.0, 1.0), vec4(1.0, 0.5, 1.0, 1.0));
+    vec2 beam = (tex_coord - vec2(0.5, 0.0)) * aspect;
+    float beam_dist = length(beam);
+    float beam_angle = acos(dot(normalize(beam), vec2(0.0, 1.0)));
+    if ((beam_angle > ant_lim) || (beam_dist > 0.9900000095367431640625))
+    {
+        discard;
+    }
+    beam_angle *= sign(beam.x);
+    if ((beam_angle < angle_start) || (beam_angle > angle_end))
+    {
+        discard;
+    }
+    float param = texture2D(tex, tex_coord).x;
+    vec4 _306 = map_color(param);
+    gl_FragData[0] = _306;
+    vec2 param_1 = beam;
+    float r = attenuation(param_1);
+    vec2 param_2 = beam;
+    float param_3 = beam_dist;
+    float param_4 = beam_dist;
+    float W = mix(sample_radar(param_2, param_3), rand_noise(param_4), r);
+    float param_5 = W;
+    vec4 _324 = map_color(param_5);
+    gl_FragData[0] = _324;
+}
+

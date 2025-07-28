@@ -70,7 +70,7 @@ float sample_radar(vec2 beam, float dist)
     vec2 param_2 = rotate_beam(param, param_1);
     vec2 uv = beam_uv(param_2);
     vec2 param_3 = uv;
-    return (0.100000001490116119384765625 * abs(random2(param_3))) + texture2D(tex, uv).x;
+    return (0.100000001490116119384765625 * random2(param_3)) + texture2D(tex, uv).x;
 }
 
 float rand_noise(float beam_dist)
@@ -95,16 +95,16 @@ void main()
         discard;
     }
     float param = texture2D(tex, tex_coord).x;
-    vec4 _306 = map_color(param);
-    gl_FragData[0] = _306;
+    vec4 _305 = map_color(param);
+    gl_FragData[0] = _305;
     vec2 param_1 = beam;
     float r = attenuation(param_1);
     vec2 param_2 = beam;
     float param_3 = beam_dist;
     float param_4 = beam_dist;
-    float W = mix(sample_radar(param_2, param_3), rand_noise(param_4), r);
+    float W = mix(sample_radar(param_2, param_3), abs(rand_noise(param_4)), 2.0 * r);
     float param_5 = W;
-    vec4 _324 = map_color(param_5);
-    gl_FragData[0] = _324;
+    vec4 _325 = map_color(param_5);
+    gl_FragData[0] = _325;
 }
 

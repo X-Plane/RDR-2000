@@ -164,28 +164,28 @@ static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
     }
 }
 
-static void rds_update_wxr_tex(int src_tex, int shader, mat4 pvm) {
+static void rds_update_wxr_tex(int src_tex, int shader) {
     quad_set_tex(wxr->src_quad, src_tex);
     glBindFramebuffer(GL_FRAMEBUFFER, wxr->wxr_fbo);
-    glViewport(0, 0, RDS_SCREEN_W/2, RDS_SCREEN_H/2);
+    glViewport(0, 0, RDS_WXR_BUF_W, RDS_WXR_BUF_H);
     
-    if(wxr->ant_clear) {
+    if(wxr->ant_clear || !wxr->is_warm) {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         wxr->ant_clear = false;
         return;
     }
     
+
+    mat4 ortho;
+    glm_ortho(0, RDS_WXR_BUF_W, 0, RDS_WXR_BUF_H, -1, 1, ortho);
+    
     // Get the data we need
     float full_range = XPLMGetDataf(wxr->dr_range);
-    mat4 ortho;
-    glm_ortho(0, RDS_SCREEN_W, 0, RDS_SCREEN_H, -1, 1, ortho);
     
-    float aspect = (float)RDS_SCREEN_W/(float)RDS_SCREEN_H;
-    int aspect_loc = glGetUniformLocation(shader, "aspect");
     glUseProgram(shader);
     glBindTexture(GL_TEXTURE_2D, wxr->crt_mask_tex);
-    glUniform2f(glGetUniformLocation(shader, "aspect"), aspect, 1.f);
+    glUniform2f(glGetUniformLocation(shader, "aspect"), (float)RDS_WXR_BUF_W/(float)RDS_WXR_BUF_H, 1.f);
     glUniform1f(glGetUniformLocation(shader, "ant_lim"), DEG2RAD(RDS_ANT_LIM));
     glUniform1f(glGetUniformLocation(shader, "range"), full_range);
     if(wxr->ant_angle > wxr->ant_angle_last) {
@@ -197,7 +197,7 @@ static void rds_update_wxr_tex(int src_tex, int shader, mat4 pvm) {
     }
 
     quad_set_shader(wxr->src_quad, shader);
-    quad_render(pvm, wxr->src_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W, RDS_SCREEN_H), 0.f, 1.f);
+    quad_render(ortho, wxr->src_quad, VEC2(0, 0), VEC2(RDS_WXR_BUF_W, RDS_WXR_BUF_H), 0.f, 1.f);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -213,21 +213,17 @@ static void rds_draw_screen(void *refcon) {
     XPLMGetDatavi(wxr->dr_viewport, old_vp, 0, 4);
 
     XPLMSetGraphicsState(0, 2, 0, 1, 1, 0, 0);
-    // glCullFace(GL_BACK);
-    
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    
-    mat4 ortho;
-    glm_ortho(0, RDS_SCREEN_W, 0, RDS_SCREEN_H, -1, 1, ortho);
-    glViewport(0, 0, RDS_SCREEN_W/2, RDS_SCREEN_H/2);
     int src_wxr = XPLMGetTexture(wxr->wxr_tex_id);
-    rds_update_wxr_tex(src_wxr, wxr->mode == RDS81_MODE_TEST ?
-        wxr->shader_test : wxr->shader_ant, ortho);
+    rds_update_wxr_tex(src_wxr, wxr->mode == RDS81_MODE_TEST ? wxr->shader_test : wxr->shader_ant);
     
     if(wxr->mode > RDS81_MODE_OFF && rds81_has_power(wxr)) {
+        mat4 ortho;
+        glm_ortho(0, RDS_SCREEN_W, 0, RDS_SCREEN_H, -1, 1, ortho);
         glBindFramebuffer(GL_FRAMEBUFFER, wxr->screen_fbo);
+        glViewport(0, 0, RDS_SCREEN_W/2, RDS_SCREEN_H/2);
     
     
         nvgBeginFrame(wxr->vg, RDS_SCREEN_W, RDS_SCREEN_H, 2);
@@ -242,7 +238,7 @@ static void rds_draw_screen(void *refcon) {
         // For the "turning on" animation, we compute the time since we turned on, then use that
         // to simulate "warmup" (AKA the alpha slowly ramps up, and the dispaly "zooms in".)
         double time_since_on = time_get_clock() - wxr->on_time;
-        float scale = 0.1f + 0.9f * CLAMP(powf(time_since_on / RDS_WARMUP_SCALE, 0.2f), 0.f, 1.f);
+        float scale = 0.1f + 0.9f * CLAMP(powf(time_since_on / RDS_WARMUP_SCALE, 0.1f), 0.f, 1.f);
         
 
         float blink = 1.f;
@@ -440,7 +436,7 @@ void rds81_init(rds81_side_t side) {
     // Allocate the OpenGL resources we need
     rds81_reload_shaders();
     
-    wxr->wxr_fbo = gl_fbo_new(RDS_SCREEN_W/2, RDS_SCREEN_H/2, &wxr->wxr_tex);
+    wxr->wxr_fbo = gl_fbo_new(RDS_WXR_BUF_W, RDS_WXR_BUF_H, &wxr->wxr_tex);
     wxr->screen_fbo = gl_fbo_new(RDS_SCREEN_W/2, RDS_SCREEN_H/2, &wxr->screen_tex);
     wxr->bezel_tex = rds81_load_tex("bezel.png");
     wxr->dots_tex = rds81_load_tex("dots.png");

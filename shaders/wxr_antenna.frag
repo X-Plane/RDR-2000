@@ -74,7 +74,7 @@ float sample_radar(vec2 beam, float dist) {
     float smear_s = (5 * s1 * s2 * s3 * s4 * s5);
     
     vec2 uv = beam_uv(rotate_beam(beam, radians(smear_s)));
-    return 0.1 * abs(random2(uv)) + texture(tex, uv).r;
+    return 0.1 * random2(uv) + texture(tex, uv).r;
 }
 
 void main() {
@@ -90,6 +90,6 @@ void main() {
     
     out_color = map_color(texture(tex, tex_coord).r);
     float r = attenuation(beam);
-    float W = mix(sample_radar(beam, beam_dist), rand_noise(beam_dist), r);
+    float W = mix(sample_radar(beam, beam_dist), abs(rand_noise(beam_dist)), 2*r);
     out_color = map_color(W);
 }

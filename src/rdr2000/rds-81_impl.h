@@ -40,6 +40,9 @@
 #define RDS_BEZEL_W         1024
 #define RDS_BEZEL_H         660
 
+#define RDS_WXR_BUF_W       (RDS_SCREEN_W/2)
+#define RDS_WXR_BUF_H       (RDS_SCREEN_H/2)
+
 #define RDS_SCREEN_OFF_X    192
 #define RDS_SCREEN_OFF_Y    100
 
@@ -197,6 +200,7 @@ typedef struct rds81_t {
     bool            stab;
     double          on_time;
     double          off_time;
+    bool            is_warm;
     
     // Antenna tracking
     float           ant_angle;

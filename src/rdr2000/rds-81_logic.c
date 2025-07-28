@@ -58,8 +58,11 @@ void rds81_update(rds81_t *wxr) {
             XPLMSetDatai(wxr->dr_mode, wxr->submode == RDS81_SUBMODE_MAP ? 4 : 2);
             break;
         }
+        wxr->is_warm = true;
     } else {
         XPLMSetDatai(wxr->dr_mode, 0);
+        wxr->ant_clear = true;
+        wxr->is_warm = false;
     }
     
     if(wxr->mode != RDS81_MODE_ON) {

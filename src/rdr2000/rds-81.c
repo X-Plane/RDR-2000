@@ -129,7 +129,7 @@ static void rds_draw_bezel(float r, float g, float b, void *refcon) {
     XPLMSetGraphicsState(0, 1, 0, 1, 1, 0, 0);
     mat4 pvm;
     rds_get_xp_pvm(wxr, pvm);
-    glCullFace(GL_BACK);
+    // glCullFace(GL_BACK);
     quad_render(pvm, wxr->bezel_quad, VEC2(0, 0), VEC2(RDS_BEZEL_W * RDS_SCALE, RDS_BEZEL_H * RDS_SCALE), 0.f, 1.f);
     rds_draw_knobs(wxr, pvm);
 }
@@ -235,7 +235,7 @@ static void rds_draw_screen(void *refcon) {
     XPLMGetDatavi(wxr->dr_viewport, old_vp, 0, 4);
 
     XPLMSetGraphicsState(0, 2, 0, 1, 1, 0, 0);
-    glCullFace(GL_BACK);
+    // glCullFace(GL_BACK);
     
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);

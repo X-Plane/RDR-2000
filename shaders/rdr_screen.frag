@@ -22,5 +22,5 @@ void main() {
     
     vec4 col = glow + t * wxr_col;
     vec4 mask_brt = texture(mask, tex_coord);
-    out_color = col * mask_brt.r * mask_brt * mask_brt.a * alpha;
+    out_color = col * pow(mask_brt.r, 1.5) * mask_brt.a * alpha;
 }

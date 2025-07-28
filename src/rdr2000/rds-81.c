@@ -188,6 +188,7 @@ static void rds_update_wxr_tex(int src_tex, int shader) {
     glUniform2f(glGetUniformLocation(shader, "aspect"), (float)RDS_WXR_BUF_W/(float)RDS_WXR_BUF_H, 1.f);
     glUniform1f(glGetUniformLocation(shader, "ant_lim"), DEG2RAD(RDS_ANT_LIM));
     glUniform1f(glGetUniformLocation(shader, "range"), full_range);
+    glUniform1f(glGetUniformLocation(shader, "ant_offset"), -(float)wxr->ant_dir);
     if(wxr->ant_angle > wxr->ant_angle_last) {
         glUniform1f(glGetUniformLocation(shader, "angle_start"), DEG2RAD(wxr->ant_angle_last));
         glUniform1f(glGetUniformLocation(shader, "angle_end"), DEG2RAD(wxr->ant_angle));
@@ -199,6 +200,12 @@ static void rds_update_wxr_tex(int src_tex, int shader) {
     quad_set_shader(wxr->src_quad, shader);
     quad_render(ortho, wxr->src_quad, VEC2(0, 0), VEC2(RDS_WXR_BUF_W, RDS_WXR_BUF_H), 0.f, 1.f);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+static float ease_out_cubic(float t)
+{
+	float f = (t - 1);
+	return f * f * f + 1;
 }
 
 static void rds_draw_screen(void *refcon) {
@@ -225,7 +232,6 @@ static void rds_draw_screen(void *refcon) {
         glBindFramebuffer(GL_FRAMEBUFFER, wxr->screen_fbo);
         glViewport(0, 0, RDS_SCREEN_W/2, RDS_SCREEN_H/2);
     
-    
         nvgBeginFrame(wxr->vg, RDS_SCREEN_W, RDS_SCREEN_H, 2);
         draw_fbo(wxr, wxr->vg, ortho);
         nvgEndFrame(wxr->vg);
@@ -238,7 +244,8 @@ static void rds_draw_screen(void *refcon) {
         // For the "turning on" animation, we compute the time since we turned on, then use that
         // to simulate "warmup" (AKA the alpha slowly ramps up, and the dispaly "zooms in".)
         double time_since_on = time_get_clock() - wxr->on_time;
-        float scale = 0.1f + 0.9f * CLAMP(powf(time_since_on / RDS_WARMUP_SCALE, 0.1f), 0.f, 1.f);
+        float t = CLAMP(time_since_on / RDS_WARMUP_SCALE, 0.f, 1.f);
+        float scale = 0.1f + 0.9f * ease_out_cubic(t);
         
 
         float blink = 1.f;

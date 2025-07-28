@@ -3,9 +3,10 @@
 uniform vec2 aspect;
 uniform float range;
 layout(binding = 0) uniform sampler2D tex;
-uniform float ant_lim;
+uniform float ant_offset;
 uniform float angle_start;
 uniform float angle_end;
+uniform float ant_lim;
 
 layout(location = 0) in vec2 tex_coord;
 layout(location = 0) out vec4 out_color;
@@ -56,14 +57,14 @@ vec2 rotate_beam(vec2 beam, float angle)
 
 float sample_radar(vec2 beam, float dist)
 {
-    float s1 = sin((dist / 2.0) * 16.1802997589111328125);
-    float s2 = sin((dist / 2.0) * 95.8280029296875);
-    float s3 = sin((dist / 2.0) * 181.9589996337890625);
-    float s4 = sin((dist / 2.0) * 314.15899658203125);
-    float s5 = sin((dist / 2.0) * 547.36297607421875);
+    float s1 = sin((dist / 2.5) * 16.1802997589111328125);
+    float s2 = sin((dist / 2.5) * 95.8280029296875);
+    float s3 = sin((dist / 2.5) * 181.9589996337890625);
+    float s4 = sin((dist / 2.5) * 314.15899658203125);
+    float s5 = sin((dist / 2.5) * 547.36297607421875);
     float smear_s = ((((5.0 * s1) * s2) * s3) * s4) * s5;
     vec2 param = beam;
-    float param_1 = radians(smear_s);
+    float param_1 = radians((0.20000000298023223876953125 * ant_offset) + smear_s);
     vec2 param_2 = rotate_beam(param, param_1);
     vec2 uv = beam_uv(param_2);
     vec2 param_3 = uv;
@@ -82,18 +83,14 @@ void main()
     vec2 beam = (tex_coord - vec2(0.5, 0.0)) * aspect;
     float beam_dist = length(beam);
     float beam_angle = acos(dot(normalize(beam), vec2(0.0, 1.0)));
-    if ((beam_angle > ant_lim) || (beam_dist > 0.9900000095367431640625))
-    {
-        discard;
-    }
     beam_angle *= sign(beam.x);
     if ((beam_angle < angle_start) || (beam_angle > angle_end))
     {
         discard;
     }
     float param = texture(tex, tex_coord).x;
-    vec4 _305 = map_color(param);
-    out_color = _305;
+    vec4 _299 = map_color(param);
+    out_color = _299;
     vec2 param_1 = beam;
     float r = attenuation(param_1);
     vec2 param_2 = beam;
@@ -101,7 +98,7 @@ void main()
     float param_4 = beam_dist;
     float W = mix(sample_radar(param_2, param_3), abs(rand_noise(param_4)), 2.0 * r);
     float param_5 = W;
-    vec4 _325 = map_color(param_5);
-    out_color = _325;
+    vec4 _319 = map_color(param_5);
+    out_color = _319;
 }
 

@@ -3,9 +3,10 @@
 layout(location = 0)    uniform sampler2D   tex;
 layout(location = 1)    uniform vec2        aspect;
 layout(location = 3)    uniform float       ant_lim;
-layout(location = 4)    uniform float       angle_start;
-layout(location = 5)    uniform float       angle_end;
-layout(location = 6)    uniform float       range;
+layout(location = 4)    uniform float       ant_offset;
+layout(location = 5)    uniform float       angle_start;
+layout(location = 6)    uniform float       angle_end;
+layout(location = 7)    uniform float       range;
 
 layout(location = 0)    in vec2             tex_coord;
 layout(location = 0)    out vec4            out_color;
@@ -65,15 +66,15 @@ float attenuation(vec2 beam) {
 }
 
 float sample_radar(vec2 beam, float dist) {
-    float s1 = sin(dist/2 * 16.1803);
-    float s2 = sin(dist/2 * 95.828);
-    float s3 = sin(dist/2 * 181.959);
-    float s4 = sin(dist/2 * 314.159);
-    float s5 = sin(dist/2 * 547.363);
+    float s1 = sin(dist/2.5 * 16.1803);
+    float s2 = sin(dist/2.5 * 95.828);
+    float s3 = sin(dist/2.5 * 181.959);
+    float s4 = sin(dist/2.5 * 314.159);
+    float s5 = sin(dist/2.5 * 547.363);
     
     float smear_s = (5 * s1 * s2 * s3 * s4 * s5);
     
-    vec2 uv = beam_uv(rotate_beam(beam, radians(smear_s)));
+    vec2 uv = beam_uv(rotate_beam(beam, radians(0.2 * ant_offset + smear_s)));
     return 0.1 * random2(uv) + texture(tex, uv).r;
 }
 
@@ -82,11 +83,9 @@ void main() {
     vec2 beam = (tex_coord - vec2(0.5, 0)) * aspect;
     float beam_dist = length(beam);
     float beam_angle = acos(dot(normalize(beam), up));
-    if(beam_angle > ant_lim || beam_dist > 0.99)
-        discard;
+    // if(beam_angle > ant_lim || beam_dist > 0.99) discard;
     beam_angle *= sign(beam.x);
     if(beam_angle < angle_start || beam_angle > angle_end) discard;
-    // return;
     
     out_color = map_color(texture(tex, tex_coord).r);
     float r = attenuation(beam);

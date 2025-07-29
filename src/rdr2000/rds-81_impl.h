@@ -24,7 +24,9 @@
 #include <XPLMDisplay.h>
 #include <XPLMGraphics.h>
 
-#define RDS_DEBUG_SHADERS
+#ifndef NDEBUG
+#define RDS_DEBUG_SHADERS   (1)
+#endif
 
 #define DR_CMD_PREFIX ""
 

@@ -7,8 +7,7 @@
 // =^•.•^=
 //===--------------------------------------------------------------------------------------------===
 #include "glutils_impl.h"
-// #include <acfutils/assert.h>
-// #include <acfutils/safe_alloc.h>
+#include <XPLMGraphics.h>
 #include <helpers/helpers.h>
 #include <stddef.h>
 
@@ -46,9 +45,6 @@ void quad_init(gl_quad_t *quad, unsigned tex, unsigned shader) {
         quad->own_shader = true;
     }
     
-    // glGenVertexArrays(1, &quad->vao);
-    // glBindVertexArray(quad->vao);
-    
     glGenBuffers(1, &quad->vbo);
     glGenBuffers(1, &quad->ibo);
     
@@ -65,12 +61,10 @@ void quad_init(gl_quad_t *quad, unsigned tex, unsigned shader) {
     quad->loc.vtx_pos = glGetAttribLocation(quad->shader, "vtx_pos");
     quad->loc.vtx_tex0 = glGetAttribLocation(quad->shader, "vtx_tex0");
     
-    // glBindVertexArray(0);
     glUseProgram(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    // XPLMBindTexture2d(0, 0);
+    XPLMBindTexture2d(0, 0);
 }
 
 void quad_set_tex(gl_quad_t *quad, unsigned tex) {
@@ -142,12 +136,7 @@ void quad_render(mat4 pvm, gl_quad_t *quad, vec2 pos, vec2 size, float rot, floa
     ASSERT(quad);
     ASSERT(pvm);
     
-// #if APL
-//     glDisableClientState(GL_VERTEX_ARRAY);
-// #endif
-    
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, quad->tex);
+    XPLMBindTexture2d(quad->tex, 0);
     
     prepare_vertices(quad, size);
     
@@ -178,7 +167,7 @@ void quad_render(mat4 pvm, gl_quad_t *quad, vec2 pos, vec2 size, float rot, floa
     
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    XPLMBindTexture2d(0, 0);
     glUseProgram(0);
     CHECK_GL();
 }

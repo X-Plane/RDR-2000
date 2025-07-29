@@ -8,7 +8,7 @@ set(ALL_SRC ${SRC} ${HDR})
 
 add_library(glutils STATIC ${ALL_SRC})
 target_compile_options(glutils PRIVATE -Wall -Wextra  -Werror)
-target_link_libraries(glutils PUBLIC helpers m cglm glew ${OPENGL_LIBRARIES} )
+target_link_libraries(glutils PUBLIC helpers m cglm glew ${OPENGL_LIBRARIES} xplm)
 target_include_directories(glutils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(APPLE)

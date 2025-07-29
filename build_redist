@@ -10,7 +10,6 @@ function build_platform() {
     BUILD_DIR="$4"
     NCPU="$5"
     
-    # PLUGIN_DIR="$SRC_DIR/q4fms/$PLATFORM"
     PLATFORM_DIR="$BUILD_DIR/$PLATFORM"
     
     CMAKE_FLAGS=(
@@ -39,8 +38,6 @@ Linux)
     build_platform $TARGETS "lin_x64" "$SRC_DIR" "$BUILD_DIR" $NCPUS && \
     build_platform $TARGETS "win_x64" "$SRC_DIR" "$BUILD_DIR" $NCPUS && \
     rm -rf "$BUILD_DIR"
-    
-    # rm -rf "$BUILD_DIR"
     ;;
 Darwin)
     NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))

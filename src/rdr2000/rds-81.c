@@ -256,17 +256,18 @@ static void rds_draw_screen(void *refcon) {
         mat4 pvm;
         rds_get_xp_pvm(wxr, pvm);
         glUseProgram(wxr->shader_screen);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, wxr->crt_mask_tex);
+        
+        XPLMBindTexture2d(wxr->screen_tex, 0);
+        XPLMBindTexture2d(wxr->crt_mask_tex, 1);
         glUniform1f(glGetUniformLocation(wxr->shader_screen, "blink"), blink);
         glUniform1i(glGetUniformLocation(wxr->shader_screen, "mask"), 1);
         glUniform1f(glGetUniformLocation(wxr->shader_screen, "scale"), scale);
         
         quad_set_shader(wxr->screen_quad, wxr->shader_screen);
         quad_render(pvm, wxr->screen_quad, VEC2(0, 0), VEC2(RDS_SCREEN_W * RDS_SCALE, RDS_SCREEN_H * RDS_SCALE), 0.f, 1.f);
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        
+        XPLMBindTexture2d(0, 0);
+        XPLMBindTexture2d(0, 1);
     }
 }
 

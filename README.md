@@ -11,7 +11,7 @@ To use the RDR-2000 plugin in your own aircraft:
 1. Copy the rdr2000 folder to your aircraft's `plugins` directory;
 2. In PlaneMaker, under `Standard` > `Viewpoint`, in the "Map" panel, set at least one
    weather radar dropdown to "Plugin"; **selecting "X-Plane" instead of "Plugin" will
-   result in incorrect weather returns;
+   result in incorrect weather returns**;
 3. In your aircraft's model, map the screen of the weather radar display model a custom cockpit
    device with the ID `RDR2000_WXR`, and map the buttons and knobs to the commands and datarefs
    listed below.

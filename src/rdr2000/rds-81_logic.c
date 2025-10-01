@@ -40,8 +40,10 @@ void rds81_update(rds81_t *wxr) {
     // The RDS-81 only uses the pilot-set gain when it's in GND MAP mode. So outside that mode,
     // we just set it to 1.f (which is the "use calibrated gain" value for XP WXR).
     if(wxr->mode == RDS81_MODE_ON && wxr->submode == RDS81_SUBMODE_MAP) {
+        wxr->eff_gain = wxr->map_gain * 2.f;
         XPLMSetDataf(wxr->dr_gain, wxr->map_gain * 2.f);
     } else {
+        wxr->eff_gain = 1.f;
         XPLMSetDataf(wxr->dr_gain, 1.f);
     }
     

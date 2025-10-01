@@ -214,6 +214,7 @@ typedef struct rds81_t {
     // The RDS-81/RDR-2000 only let the pilot change the gain in MAP mode, so we need to keep track
     // of it aside from the default XP weather radar's datarefs.
     float           map_gain;
+    float           eff_gain;
     
 #ifdef RDS_DEBUG_SHADERS
     XPLMCommandRef  reload_shaders_cmd;

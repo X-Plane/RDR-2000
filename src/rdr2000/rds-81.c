@@ -7,6 +7,7 @@
  * Licensed under the MIT License
  *===--------------------------------------------------------------------------------------------===
 */
+#include "glutils/gl.h"
 #include "rds-81_impl.h"
 
 #include <XPLMGraphics.h>
@@ -112,10 +113,10 @@ static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
         nvgFillColor(vg, nvgRGB(0, 255, 255));
     
         static const vec2 rng_pos[4] = {
-            {RDS_SCREEN_W/2 + 40, WXR_H-20},
-            {RDS_SCREEN_W/2 + 130, WXR_H-100},
-            {RDS_SCREEN_W/2 + 180, WXR_H-170},
-            {RDS_SCREEN_W/2 + 170, WXR_H-310},
+            {RDS_SCREEN_W/2.f + 40, WXR_H-20},
+            {RDS_SCREEN_W/2.f + 130, WXR_H-100},
+            {RDS_SCREEN_W/2.f + 180, WXR_H-170},
+            {RDS_SCREEN_W/2.f + 170, WXR_H-310},
         };
     
         for(int i = 0; i < 4; ++i) {
@@ -130,10 +131,10 @@ static void draw_fbo(rds81_t *wxr, NVGcontext *vg, mat4 pvm) {
         float tilt = XPLMGetDataf(wxr->dr_tilt);
         char buf[32];
         if(round(tilt * 10) == 0) {
-            nvgText(vg, RDS_SCREEN_W/2 + 240, WXR_H-350, "0°", NULL);
+            nvgText(vg, RDS_SCREEN_W/2.f + 240, WXR_H-350, "0°", NULL);
         } else {
             snprintf(buf, sizeof(buf), "%c %4.1f°", tilt > 0 ? 'U' : 'D', fabs(tilt));
-            nvgText(vg, RDS_SCREEN_W/2 + 195, WXR_H-350, buf, NULL);
+            nvgText(vg, RDS_SCREEN_W/2.f + 195, WXR_H-350, buf, NULL);
         }
     }
     
@@ -188,6 +189,7 @@ static void rds_update_wxr_tex(int src_tex, int shader) {
     glUniform2f(glGetUniformLocation(shader, "aspect"), (float)RDS_WXR_BUF_W/(float)RDS_WXR_BUF_H, 1.f);
     glUniform1f(glGetUniformLocation(shader, "ant_lim"), DEG2RAD(RDS_ANT_LIM));
     glUniform1f(glGetUniformLocation(shader, "range"), full_range);
+    glUniform1f(glGetUniformLocation(shader, "gain"), wxr->eff_gain);
     glUniform1f(glGetUniformLocation(shader, "ant_offset"), -(float)wxr->ant_dir);
     if(wxr->ant_angle > wxr->ant_angle_last) {
         glUniform1f(glGetUniformLocation(shader, "angle_start"), DEG2RAD(wxr->ant_angle_last));
@@ -493,6 +495,7 @@ void rds81_init(rds81_side_t side) {
     wxr->submode = RDS81_SUBMODE_WX;
     wxr->stab = true;
     wxr->map_gain = 0.5f;
+    wxr->map_gain = 1.f;
     
     wxr->ant_angle = -RDS_ANT_LIM;
     wxr->ant_angle_last = -RDS_ANT_LIM;

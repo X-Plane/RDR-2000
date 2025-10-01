@@ -2,6 +2,7 @@
 
 uniform vec2 aspect;
 uniform float range;
+uniform float gain;
 layout(binding = 0) uniform sampler2D tex;
 uniform float ant_offset;
 uniform float angle_start;
@@ -23,11 +24,6 @@ vec2 beam_uv(vec2 beam)
     return vec2(0.5, 0.0) + (beam / aspect);
 }
 
-float random2(vec2 st)
-{
-    return fract(sin(dot(st, vec2(12.98980045318603515625, 78.233001708984375))) * 43758.546875);
-}
-
 float attenuation(vec2 beam)
 {
     float integ = 0.0;
@@ -37,14 +33,13 @@ float attenuation(vec2 beam)
     {
         float mult = float(i) / float(n);
         vec2 param = beam * mult;
-        integ += (texture(tex, beam_uv(param)).x / 40.0);
+        integ += ((2.0 - gain) * pow(texture(tex, beam_uv(param)).x / 40.0, 1.25));
         if ((mult * range) > dist)
         {
             break;
         }
     }
-    vec2 param_1 = beam;
-    return 2.0 * mix(random2(param_1), integ, 1.0);
+    return 2.0 * integ;
 }
 
 vec2 rotate_beam(vec2 beam, float angle)
@@ -53,6 +48,11 @@ vec2 rotate_beam(vec2 beam, float angle)
     float sin_ang = sin(angle);
     mat2 rot_ang = mat2(vec2(cos_ang, -sin_ang), vec2(sin_ang, cos_ang));
     return rot_ang * beam;
+}
+
+float random2(vec2 st)
+{
+    return fract(sin(dot(st, vec2(12.98980045318603515625, 78.233001708984375))) * 43758.546875);
 }
 
 float sample_radar(vec2 beam, float dist)
@@ -89,8 +89,8 @@ void main()
         discard;
     }
     float param = texture(tex, tex_coord).x;
-    vec4 _299 = map_color(param);
-    out_color = _299;
+    vec4 _301 = map_color(param);
+    out_color = _301;
     vec2 param_1 = beam;
     float r = attenuation(param_1);
     vec2 param_2 = beam;
@@ -98,7 +98,7 @@ void main()
     float param_4 = beam_dist;
     float W = mix(sample_radar(param_2, param_3), abs(rand_noise(param_4)), 2.0 * r);
     float param_5 = W;
-    vec4 _319 = map_color(param_5);
-    out_color = _319;
+    vec4 _321 = map_color(param_5);
+    out_color = _321;
 }
 

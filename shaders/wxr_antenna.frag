@@ -7,6 +7,7 @@ layout(location = 4)    uniform float       ant_offset;
 layout(location = 5)    uniform float       angle_start;
 layout(location = 6)    uniform float       angle_end;
 layout(location = 7)    uniform float       range;
+layout(location = 8)    uniform float       gain;
 
 layout(location = 0)    in vec2             tex_coord;
 layout(location = 0)    out vec4            out_color;
@@ -58,11 +59,11 @@ float attenuation(vec2 beam) {
     
     for(int i = 0; i < n; ++i) {
         float mult = float(i)/float(n);
-        integ += texture(tex, beam_uv(beam * mult)).r / float(ATTEN_N);
+        integ += (2.f-gain) * pow(texture(tex, beam_uv(beam * mult)).r / float(ATTEN_N), 1.25);
         if(mult * range > dist)
             break;
     }
-    return 2*mix(random2(beam), integ, 1);
+    return 2 * integ;
 }
 
 float sample_radar(vec2 beam, float dist) {

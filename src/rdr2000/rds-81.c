@@ -80,11 +80,11 @@ static void rds_draw_bezel(float r, float g, float b, void *refcon) {
     rds_draw_knobs(wxr, pvm);
 }
 
-#define WXR_CTR_X   (160*2)
-#define WXR_CTR_Y   (17*2)
+#define WXR_CTR_X   (160*2.f)
+#define WXR_CTR_Y   (17*2.f)
 
-#define WXR_H       (205*2)
-#define WXR_W       (290*2)
+#define WXR_H       (205*2.f)
+#define WXR_W       (290*2.f)
 
 #define WXR_POS_X   (WXR_CTR_X - (WXR_W/2))
 #define WXR_POS_Y   (WXR_CTR_Y)
@@ -185,7 +185,6 @@ static void rds_update_wxr_tex(int src_tex, int shader) {
     float full_range = XPLMGetDataf(wxr->dr_range);
     
     glUseProgram(shader);
-    glBindTexture(GL_TEXTURE_2D, wxr->crt_mask_tex);
     glUniform2f(glGetUniformLocation(shader, "aspect"), (float)RDS_WXR_BUF_W/(float)RDS_WXR_BUF_H, 1.f);
     glUniform1f(glGetUniformLocation(shader, "ant_lim"), DEG2RAD(RDS_ANT_LIM));
     glUniform1f(glGetUniformLocation(shader, "range"), full_range);

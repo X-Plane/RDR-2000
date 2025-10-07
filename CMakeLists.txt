@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(rdr2000 VERSION 1.1.1 LANGUAGES C)
+project(rdr2000 VERSION 1.1.2 LANGUAGES C)
 include(cmake/xplm.cmake)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

@@ -33,6 +33,18 @@ static const char *frag_shader =
     "   gl_FragColor.a *= alpha;\n"
     "}\n";
 
+static void quad_find_shader_uniforms(gl_quad_t *quad) {
+    glUseProgram(quad->shader);
+    quad->loc.pv = glGetUniformLocation(quad->shader, "pv");
+    quad->loc.model = glGetUniformLocation(quad->shader, "model");
+    quad->loc.tex = glGetUniformLocation(quad->shader, "tex");
+    quad->loc.alpha = glGetUniformLocation(quad->shader, "alpha");
+    
+    quad->loc.vtx_pos = glGetAttribLocation(quad->shader, "vtx_pos");
+    quad->loc.vtx_tex0 = glGetAttribLocation(quad->shader, "vtx_tex0");
+    glUseProgram(0);
+}
+
 void quad_init(gl_quad_t *quad, unsigned tex, unsigned shader) {
     quad->last_size[0] = NAN;
     
@@ -44,6 +56,7 @@ void quad_init(gl_quad_t *quad, unsigned tex, unsigned shader) {
         quad->shader = gl_program_new(vert_shader, frag_shader);
         quad->own_shader = true;
     }
+    quad_find_shader_uniforms(quad);
     
     glGenBuffers(1, &quad->vbo);
     glGenBuffers(1, &quad->ibo);
@@ -52,16 +65,7 @@ void quad_init(gl_quad_t *quad, unsigned tex, unsigned shader) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad->ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     
-    glUseProgram(quad->shader);
-    quad->loc.pv = glGetUniformLocation(quad->shader, "pv");
-    quad->loc.model = glGetUniformLocation(quad->shader, "model");
-    quad->loc.tex = glGetUniformLocation(quad->shader, "tex");
-    quad->loc.alpha = glGetUniformLocation(quad->shader, "alpha");
-    
-    quad->loc.vtx_pos = glGetAttribLocation(quad->shader, "vtx_pos");
-    quad->loc.vtx_tex0 = glGetAttribLocation(quad->shader, "vtx_tex0");
-    
-    glUseProgram(0);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     XPLMBindTexture2d(0, 0);
@@ -73,10 +77,15 @@ void quad_set_tex(gl_quad_t *quad, unsigned tex) {
 
 
 void quad_set_shader(gl_quad_t *quad, unsigned shader) {
+    GLuint old_shader = quad->shader;
     if(quad->own_shader)
         glDeleteProgram(quad->shader);
     quad->shader = shader;
     quad->own_shader = false;
+    
+    if(old_shader != quad->shader) {
+        quad_find_shader_uniforms(quad);
+    }
 }
 
 void quad_fini(gl_quad_t *quad) {

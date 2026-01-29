@@ -16,7 +16,7 @@ add_definitions("-DGL_SILENCE_DEPRECATION=1")
 
 if(APPLE)
 	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
-	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version" FORCE)
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum macOS version" FORCE)
 endif()
 
 use_static_libc()

@@ -5,9 +5,9 @@ uniform float range;
 uniform float gain;
 layout(binding = 0) uniform sampler2D tex;
 uniform float ant_offset;
+uniform float ant_lim;
 uniform float angle_start;
 uniform float angle_end;
-uniform float ant_lim;
 
 layout(location = 0) in vec2 tex_coord;
 layout(location = 0) out vec4 out_color;
@@ -79,18 +79,22 @@ float rand_noise(float beam_dist)
 
 void main()
 {
-    colors = vec4[](vec4(0.0, 0.0, 0.0, 1.0), vec4(0.0, 1.0, 0.20000000298023223876953125, 1.0), vec4(1.0, 1.0, 0.0, 1.0), vec4(1.0, 0.0, 0.0, 1.0), vec4(1.0, 0.5, 1.0, 1.0));
+    colors = vec4[](vec4(0.0, 0.0, 0.0, 1.0), vec4(0.0, 1.0, 0.5, 1.0), vec4(1.0, 1.0, 0.5, 1.0), vec4(1.0, 0.0, 0.0, 1.0), vec4(1.0, 0.800000011920928955078125, 1.0, 1.0));
     vec2 beam = (tex_coord - vec2(0.5, 0.0)) * aspect;
     float beam_dist = length(beam);
     float beam_angle = acos(dot(normalize(beam), vec2(0.0, 1.0)));
+    if ((beam_angle > ant_lim) || (beam_dist > 1.0))
+    {
+        discard;
+    }
     beam_angle *= sign(beam.x);
     if ((beam_angle < angle_start) || (beam_angle > angle_end))
     {
         discard;
     }
     float param = texture(tex, tex_coord).x;
-    vec4 _301 = map_color(param);
-    out_color = _301;
+    vec4 _312 = map_color(param);
+    out_color = _312;
     vec2 param_1 = beam;
     float r = attenuation(param_1);
     vec2 param_2 = beam;
@@ -98,7 +102,7 @@ void main()
     float param_4 = beam_dist;
     float W = mix(sample_radar(param_2, param_3), abs(rand_noise(param_4)), 2.0 * r);
     float param_5 = W;
-    vec4 _321 = map_color(param_5);
-    out_color = _321;
+    vec4 _332 = map_color(param_5);
+    out_color = _332;
 }
 

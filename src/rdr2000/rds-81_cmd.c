@@ -311,6 +311,41 @@ static void set_brt(void *ptr, float val) {
     XPLMSetAvionicsBrightnessRheo(wxr->device, CLAMP(val, 0.f, 1.f));
 }
 
+static int get_override_bus_volts(void *ptr) {
+    UNUSED(ptr);
+    if(!wxr)
+        return 0;
+    return wxr->override_bus_volts ? 1 : 0;
+}
+
+static void set_override_bus_volts(void *ptr, int val) {
+    UNUSED(ptr);
+    if(!wxr)
+        return;
+    wxr->override_bus_volts = !!val;
+}
+
+static float get_bus_volts(void *ptr) {
+    UNUSED(ptr);
+    if(!wxr)
+        return 0.f;
+    return rds81_bus_volts(wxr);
+}
+
+static void set_bus_volts(void *ptr, float val) {
+    UNUSED(ptr);
+    if(!wxr || !wxr->override_bus_volts)
+        return;
+    wxr->bus_volts = CLAMP(val, 0.f, 35.f);
+}
+
+static float get_power_watts(void *ptr) {
+    UNUSED(ptr);
+    if(!wxr)
+        return 0.f;
+    return rds81_has_power(wxr) && wxr->mode != RDS81_MODE_OFF ? 120.f : 0.f;
+}
+
 void rds81_declare_cmd_dr() {
     wxr_out.cmd_popup = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/popup", "RDR2000 popup");
     wxr_out.cmd_popout = XPLMCreateCommand(DR_CMD_PREFIX "rdr2000/popout", "RDR2000 pop out window");
@@ -343,6 +378,27 @@ void rds81_declare_cmd_dr() {
     wxr_out.dr_brt = create_dr_f(get_brt, set_brt, NULL, DR_CMD_PREFIX "rdr2000/brightness");
     wxr_out.dr_tilt = create_dr_f(get_tilt, set_tilt, NULL, DR_CMD_PREFIX "rdr2000/tilt");
     wxr_out.dr_gain = create_dr_f(get_gain, set_gain, NULL, DR_CMD_PREFIX "rdr2000/gain");
+    
+    wxr_out.dr_override_bus_volts = create_dr_i(
+        get_override_bus_volts,
+        set_override_bus_volts,
+        NULL,
+        DR_CMD_PREFIX "rdr2000/override_bus_volts"
+    );
+    
+    wxr_out.dr_bus_volts = create_dr_f(
+        get_bus_volts,
+        set_bus_volts,
+        NULL,
+        DR_CMD_PREFIX "rdr2000/bus_volts"
+    );
+    
+    wxr_out.dr_power_watts = create_dr_f(
+        get_power_watts,
+        NULL,
+        NULL,
+        DR_CMD_PREFIX "rdr2000/power_watts"
+    );
 }
 
 void rds81_unbind_dr_cmd() {
@@ -350,11 +406,17 @@ void rds81_unbind_dr_cmd() {
     XPLMUnregisterDataAccessor(wxr_out.dr_gain);
     XPLMUnregisterDataAccessor(wxr_out.dr_tilt);
     XPLMUnregisterDataAccessor(wxr_out.dr_brt);
+    XPLMUnregisterDataAccessor(wxr_out.dr_override_bus_volts);
+    XPLMUnregisterDataAccessor(wxr_out.dr_bus_volts);
+    XPLMUnregisterDataAccessor(wxr_out.dr_power_watts);
     
     wxr_out.dr_mode = NULL;
     wxr_out.dr_gain = NULL;
     wxr_out.dr_tilt = NULL;
     wxr_out.dr_brt = NULL;
+    wxr_out.dr_override_bus_volts = NULL;
+    wxr_out.dr_bus_volts = NULL;
+    wxr_out.dr_power_watts = NULL;
     
     memset(&wxr_out, 0, sizeof(wxr_out));
 }

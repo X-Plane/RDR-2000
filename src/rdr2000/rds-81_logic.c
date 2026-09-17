@@ -118,8 +118,18 @@ void rds81_reset_datarefs(rds81_t *wxr) {
     XPLMSetDatai(wxr->dr_multiscan, 0);
 }
 
-bool rds81_has_power(rds81_t *wxr) {
+bool rds81_has_power(const rds81_t *wxr) {
+    return rds81_bus_volts(wxr) > 19.f;
+}
+
+float rds81_bus_volts(const rds81_t *wxr) {
+    if(wxr->override_bus_volts) {
+        return wxr->bus_volts;
+    }
     float bus_ratio = XPLMGetAvionicsBusVoltsRatio(wxr->device);
-    return bus_ratio < 0.f || XPLMGetDatai(wxr->dr_avionics_power) && bus_ratio > 0.8f;
+    if(bus_ratio < 0.f) {
+        return 28.f;
+    }
+    return bus_ratio * 28.f;
 }
 

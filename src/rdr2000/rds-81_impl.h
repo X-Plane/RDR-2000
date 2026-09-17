@@ -135,6 +135,10 @@ typedef struct rds81_out_t {
     XPLMDataRef     dr_gain;
     XPLMDataRef     dr_tilt;
     XPLMDataRef     dr_brt;
+    
+    XPLMDataRef     dr_override_bus_volts;
+    XPLMDataRef     dr_bus_volts;
+    XPLMDataRef     dr_power_watts;
 } rds81_out_t;
 
 typedef struct rds81_t {
@@ -216,6 +220,11 @@ typedef struct rds81_t {
     float           map_gain;
     float           eff_gain;
     
+    // Power data: this lets plugins tell the RDR to listen to their own data for power
+    // checks rather than using the device-declared XP bus
+    bool            override_bus_volts;
+    float           bus_volts;
+    
 #ifdef RDS_DEBUG_SHADERS
     XPLMCommandRef  reload_shaders_cmd;
     int             reload_shaders_menu;
@@ -239,7 +248,8 @@ bool rds81_cursor(rds81_t *wxr, vec2 pos);
 
 void rds81_reset_datarefs(rds81_t *wxr);
 void rds81_update(rds81_t *wxr);
-bool rds81_has_power(rds81_t *wxr);
+bool rds81_has_power(const rds81_t *wxr);
+float rds81_bus_volts(const rds81_t *wxr);
 
 #endif /* ifndef _RDS_81_IMPL_H_ */
 

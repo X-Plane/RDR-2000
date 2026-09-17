@@ -501,6 +501,9 @@ void rds81_init(rds81_side_t side) {
     wxr->ant_dir = 1;
     wxr->ant_clear = true;
     
+    wxr->override_bus_volts = false;
+    wxr->bus_volts = 0.f;
+    
     rds81_reset_datarefs(wxr);
     
 #ifdef RDS_DEBUG_SHADERS
